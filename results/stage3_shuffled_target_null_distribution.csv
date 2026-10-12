@@ -1,0 +1,2 @@
+N_Permutations,RMSE_Null_Mean,RMSE_Null_Std,RMSE_Null_p2_5,RMSE_Null_p97_5,R2_Null_Mean,R2_Null_Std,R2_Null_p2_5,R2_Null_p97_5,Observed_Tuned_RF_RMSE,Observed_Tuned_RF_R2,Interpretation
+20,320.1765690932538,7.282177185906695,310.81217523076634,333.003019099205,-0.16769306983286186,0.05566584861328094,-0.2645615574668877,-0.08151578319326906,159.56991008692063,0.6857062930032859,No evidence of leakage in the pipeline; model performance collapses to baseline under random targets

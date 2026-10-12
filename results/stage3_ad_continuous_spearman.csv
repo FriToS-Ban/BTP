@@ -1,0 +1,2 @@
+Analysis_Type,Sample_Count_Clusters,Spearman_rho,Bootstrap_95_CI_Low,Bootstrap_95_CI_High,p_value,Interpretation
+Cluster-Level Spearman Rank Correlation (Exploratory),201,0.08595389389685237,-0.044953690747478244,0.23070967563999906,0.2250330053931476,Positive rank trend between cluster compositional distance and mean validation error; should be confirmed on independent data.
