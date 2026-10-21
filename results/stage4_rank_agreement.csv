@@ -1,0 +1,4 @@
+check,spearman,p_value
+permutation_vs_shap_default_rf_13,0.967032967032967,7.064113887175167e-08
+path_vs_interventional_median,0.978021978021978,
+path_vs_interventional_min,0.912087912087912,

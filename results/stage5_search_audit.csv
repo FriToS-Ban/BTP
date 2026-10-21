@@ -1,0 +1,2 @@
+n_trials_per_seed,target_yield_mpa,uncertainty_k,retrieval_distance_cutoff,ad_distance_cutoff,feasible_seed_42,feasible_seed_43,mean_composition_distance_top10,jaccard_nearest_training_idx_top10,training_lcb_p95,training_lcb_max,best_candidate_lcb,best_candidate_beats_training_max,n_candidates_labeled_retrieval,n_candidates_labeled_variant
+400,1500.0,1.0,0.40666557571566214,1.8518332227770333,142,235,4.885598434265157,0.25,1738.7720832084249,2407.74665192071,1664.5835469607348,False,0,20

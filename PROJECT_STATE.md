@@ -16,7 +16,14 @@
 - **Stage 3 (Tuning, Neural/GP Comparators, Outlier Audit):** COMPLETE (Audited).
   - Nested Optuna tuning per outer training fold (25 splits $\times$ 15 trials per model), fixed ARD Matérn GP, Leave-One-Cluster-Out (LOCO) extrapolation, Nadeau-Bengio corrected paired tests, hedged family and outlier audit, 20-permutation null target test.
   - Files: `src/stage3_complete_audited.py`, `src/audit_repo_terms.py`, `notebooks/03_tuning_and_residual_audit.ipynb`, `results/stage3_*.csv`, `figures/fig10_tuned_models_parity.png` to `fig13_family_error_comparison.png`.
-- **Stage 4 (SHAP Interpretation):** NOT STARTED (Awaiting explicit user approval).
+- **Stage 4 (SHAP Interpretation):** COMPLETE. Default RF on 13 non-Fe features is the headline explainer. Dropping Fe changes RMSE by $-3.8\text{ MPa}$, corrected interval crosses zero. Consensus labels: Al and Co consistent; Ti, Ni, Cr, Mo unclear for the reasons in `NOTES.md`. Ti has the largest mean |SHAP| ($119\text{ MPa}$) and the three models do not agree on its sign inside stainless steels.
+  - Files: `src/stage4_shap.py`, `notebooks/04_shap_interpretation.ipynb`, `results/stage4_*.csv`, `figures/fig14`–`fig21`.
+- **Stage 5 (Inverse design with uncertainty):** COMPLETE as a negative search result. Two seeds, 400 trials. Top candidates are in-domain variants of three training alloys and do not beat the best in-sample training lower bound ($1665$ vs $2408\text{ MPa}$). Seeds do not agree (composition distance $4.9\text{ wt}\%$, Jaccard $0.25$). GP length scales saved; tungsten is censored at the upper bound in every fold.
+  - Files: `src/stage5_inverse_design.py`, `results/stage5_*.csv`, `results/stage5_screening_bundle.joblib`, `figures/fig22`–`fig23`.
+- **Stage 6 (Pareto):** COMPLETE. NSGA-II front of lower confidence bound versus EU 2023 criticality. Carbon equivalent was not an objective: 0 of 312 alloys sit inside the published CET window. Best front lower bound $2212\text{ MPa}$, still below the best training alloy. Several coordinates sit on the training box.
+  - Files: `src/stage6_pareto.py`, `results/stage6_*.csv`, `figures/fig24`–`fig25`.
+- **Stage 7 (Screening demo and notes):** COMPLETE except the supervisor-dataset extension, which has no file in the repo.
+  - Files: `src/stage7_screen_alloy.py`, `notebooks/05_inverse_design.ipynb`, `notebooks/06_pareto_front.ipynb`, `WORK_PLAN.md`.
 
 ---
 
@@ -74,7 +81,7 @@
 
 ## 7. Roadmap: Stages 4 to 7 and Extension Phase
 
-### Stage 4: SHAP Interpretation (Awaiting Approval)
+### Stage 4: SHAP Interpretation (complete; see NOTES.md for the consensus table)
 - **Models & Features:** Tuned RF and Tuned XGBoost. Train 13-feature (no-Fe) versions to verify accuracy is maintained and interpret effects as "replacing Fe".
 - **Global Importance:** `shap.TreeExplainer` (beeswarm, mean |SHAP| bar chart, dependence plots for Ti, Ni, Co, Cr, Mo, C, Al, Si). Validate against Grouped CV Permutation Importance.
 - **Stability:** Compute SHAP across 25 outer training folds; report rank correlation and spread of mean |SHAP|.
@@ -84,17 +91,17 @@
 - **Limitations:** Record in `NOTES.md` that SHAP explains the model, not physical causality; correlation splits credit; closure constraints.
 - **Outputs:** Results CSVs, publication figures, viva Q&A in `NOTES.md`, end-of-stage report, STOP for approval.
 
-### Stage 5: Inverse Alloy Design via Bayesian Optimization
+### Stage 5: Inverse Alloy Design via Bayesian Optimization (complete; the search did not beat the training alloys)
 - Multi-objective BO (target yield strength $\ge 1500\text{ MPa}$, minimize raw material cost / critical elements).
 - Uncertainty quantification via GP predictive standard deviation or tree ensemble variance.
 - Applicability-domain constraint enforcing proposals within reliable training support.
 
-### Stage 6: Multi-Objective & Pareto Optimization
+### Stage 6: Multi-Objective & Pareto Optimization (complete; carbon equivalent was audited and not optimized)
 - Pareto front exploration (strength vs alloy cost vs weldability indicators).
 - Verification of candidate chemistries against metallurgical feasibility constraints.
 
 ### Stage 7: Synthesis, Dashboard & Viva Defense
 - Synthesis report, interactive demonstration dashboard (Streamlit/script), final mock viva Q&A deck.
 
-### Extension Phase: Supervisor-Paper Dataset
+### Extension Phase: Supervisor-Paper Dataset (not started; the file is not in the repo)
 - Evaluate trained models and applicability-domain heuristic on independent extension dataset from supervisor's publication to test external generalization.

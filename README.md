@@ -32,13 +32,15 @@ BTP/
 │
 ├── data/                  # Raw and processed dataset files (CSV, Parquet)
 ├── notebooks/             # Exploratory analysis and presentation notebooks
-├── src/                   # Production-grade Python scripts for all stages
-│   ├── stage1_data_eda.py # Stage 1: Data ingestion, pymatgen parsing, EDA
-│   ├── stage2_baselines.py# Stage 2: Repeated CV benchmark of baseline models
-│   ├── stage3_tuning.py   # Stage 3: Optuna hyperparameter optimization & residual analysis
-│   ├── stage4_shap.py     # Stage 4: SHAP interpretability and metallurgical audit
-│   ├── stage5_uncertainty.py # Stage 5: Bootstrapped ensemble & uncertainty calibration
-│   └── stage6_inverse_design.py # Stage 6: Constrained Bayesian inverse alloy design
+├── src/                   # Python scripts for all stages
+│   ├── stage1_data_eda.py
+│   ├── stage2_baselines.py
+│   ├── stage3_complete_audited.py  # Authoritative Stage 3 script
+│   ├── stage4_shap.py
+│   ├── stage5_inverse_design.py    # Includes the Gaussian-process uncertainty
+│   ├── stage6_pareto.py
+│   └── stage7_screen_alloy.py
+├── WORK_PLAN.md           # Remaining defense work, in six blocks
 ├── figures/               # Generated high-resolution figures (.png, 300 DPI)
 ├── results/               # Metrics tables, candidate compositions, cross-validation logs
 ├── README.md              # Project documentation and reproduction guide
@@ -67,24 +69,30 @@ Each stage is self-contained and reproducible with fixed random seeds:
   ```bash
   python src/stage2_baselines.py
   ```
-- **Stage 3 (Tuning & Error Analysis):**
+- **Stage 3 (nested tuning and residual audit):**
   ```bash
-  python src/stage3_tuning.py
+  python src/stage3_complete_audited.py
   ```
-- **Stage 4 (SHAP Interpretability):**
+  `src/stage3_tuning.py` is the earlier script. Do not rerun it over the audited tables.
+- **Stage 4 (SHAP):**
   ```bash
   python src/stage4_shap.py
   ```
-- **Stage 5 (Uncertainty Quantification):**
+- **Stage 5 (inverse design, with uncertainty):**
   ```bash
-  python src/stage5_uncertainty.py
+  python src/stage5_inverse_design.py
   ```
-- **Stage 6 (Inverse Alloy Design):**
+- **Stage 6 (Pareto front):**
   ```bash
-  python src/stage6_inverse_design.py
+  python src/stage6_pareto.py
+  ```
+- **Stage 7 (screen one composition):**
+  ```bash
+  python src/stage7_screen_alloy.py --example mild-steel
+  python src/stage7_screen_alloy.py --example training-strongest
   ```
 
 ---
 
 ## 5. Defense & Oral Examination Notes
-Comprehensive metallurgical explanations, answers to common viva questions, and theoretical justifications for all machine learning choices are documented in [NOTES.md](file:///c:/Users/SHIBASISH/BTP/NOTES.md).
+Viva answers, the errata to the earlier prose, and the Stage 4–6 results are in [NOTES.md](NOTES.md). The six blocks of remaining defense work are in [WORK_PLAN.md](WORK_PLAN.md). The external test on a supervisor dataset is not in this repository yet.

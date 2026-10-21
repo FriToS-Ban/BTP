@@ -1,0 +1,5 @@
+element_a,element_b,pdp_corner_contrast_mpa,mean_shap_interaction_mpa,signs_agree,model
+Ni,Ti,-3.2377003991086895,-0.16413149357749848,True,"full-data default RF, 13 features, explanatory only"
+Co,Mo,67.83192526342054,0.5456003120843276,True,"full-data default RF, 13 features, explanatory only"
+Cr,Ni,7.641991904588394,-0.21546585064834806,False,"full-data default RF, 13 features, explanatory only"
+C,Cr,-15.303329527959704,0.8482439965147118,False,"full-data default RF, 13 features, explanatory only"

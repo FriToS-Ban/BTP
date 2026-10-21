@@ -333,7 +333,7 @@ To determine whether model ranking and feature set differences are statistically
 
 *Gaussian Process Predictive Calibration & Kernel Properties:*
 - **Log Marginal Likelihood:** Typical training fit achieved $\text{LML} \approx -1320\text{ to } -1350$.
-- **Fitted ARD Length Scales:** Highest relevance (shortest length scales, indicating high sensitivity) observed for Ti ($\ell \approx 0.8\text{--}1.5$), C ($\ell \approx 1.2\text{--}2.0$), and Al ($\ell \approx 2.1\text{--}3.5$). Moderate length scales for Ni, Mo, Cr ($\ell \approx 5\text{--}12$). Longest length scales (lowest sensitivity) for Cu, W, N ($\ell > 50$).
+- **Fitted ARD Length Scales:** The numeric ranges that used to stand in this sentence, including a mention of copper, were not saved by the Stage 3 script and are withdrawn. Copper is not one of the 14 elements. The length scales that were actually written to disk are in Stage 5 (`results/stage5_gp_length_scale_summary.csv`).
 - **Predictive Uncertainty Calibration:**
   - Fraction of true values within $\pm 1\hat{\sigma}$: **62.82%** (Gaussian reference: 68.27%).
   - Fraction of true values within $\pm 2\hat{\sigma}$: **88.78%** (Gaussian reference: 95.45%).
@@ -445,15 +445,136 @@ Notice that for Clusters 126 and 86, LOCO $R^2$ is slightly negative ($-0.138$ a
 > "An $R^2$ of $-0.03$ indicates predicting the dataset mean and was diagnosed as a kernel configuration issue:  
 > 1. We removed Iron (Fe), eliminating exact linear dependency among the 14 features ($\sum = 100\%$).  
 > 2. We standardized input features and set `normalize_y=True`.  
-> 3. We replaced the single isotropic length scale with an Automatic Relevance Determination (ARD) Matérn ($\nu=2.5$) kernel featuring 13 separate length scales, allowing the optimizer to learn that trace solutes like Ti and C require much shorter length scales than bulk elements like Ni or Cr.  
+> 3. We replaced the single isotropic length scale with an Automatic Relevance Determination (ARD) Matérn ($\nu=2.5$) kernel featuring 13 separate length scales, so the optimizer can treat trace solutes and bulk solutes differently. The saved length scales are in the Stage 5 table, not in this answer.  
 > 4. With 5 restarts of the L-BFGS optimizer, the GP converged to an RMSE of $183.04\text{ MPa}$ ($R^2 = 0.590$), well above Ridge ($R^2 \approx 0.32$), with well-calibrated predictive uncertainties (62.8% within $\pm 1\sigma$ and 88.8% within $\pm 2\sigma$)."
 
 ### Q11. "What did your Leave-One-Cluster-Out (LOCO) test show about extrapolation?"
 > **Student Answer:**  
-> "We evaluated the 5 largest compositional clusters by holding out each cluster entirely, training on all remaining 200 clusters, and evaluating against pre-stated criteria (RMSE $\le 231.1\text{ MPa}$, $|\text{bias}| \le 100\text{ MPa}$). All 5 clusters met both criteria, with LOCO RMSEs ranging from $39.2\text{ MPa}$ to $143.5\text{ MPa}$ and biases between $-49.5\text{ MPa}$ and $+28.8\text{ MPa}$. This demonstrates that tree ensembles can reliably interpolate across related clusters without catastrophic failure, provided the unseen alloy does not represent an entirely unprecedented chemical domain."
+> "We evaluated the 5 largest compositional clusters by holding out each cluster entirely, training on all remaining 200 clusters, and evaluating against pre-stated criteria (RMSE $\le 231.1\text{ MPa}$, $|\text{bias}| \le 100\text{ MPa}$). All 5 clusters met both criteria, with LOCO RMSEs ranging from $39.2\text{ MPa}$ to $143.5\text{ MPa}$ and biases between $-49.5\text{ MPa}$ and $+28.8\text{ MPa}$. The $231.1\text{ MPa}$ bar used an older benchmark. The matching bar for the nested tuned forest is $239.4\text{ MPa}$, and the same five clusters pass that too."
 
 ### Q12. "Why do you state that top outliers represent heat-treatment differences only as hypotheses?"
 > **Student Answer:**  
 > "Because the Matbench dataset contains only elemental formulas and experimental yield strength—it contains zero records of commercial trade names, austenitizing temperatures, cooling rates, or aging times. When an alloy with high Ti, Ni, and Co has a measured yield strength of only $1164\text{ MPa}$ compared to a predicted $1687\text{ MPa}$, asserting that it is 'an unhardened alloy tested after solution treatment' is an unverified hypothesis. It is metallurgically plausible that unrecorded processing differences account for this $\sim 500\text{ MPa}$ gap, but scientifically we must distinguish between what is recorded in the data and our metallurgical interpretation."
+
+---
+
+## Errata to Stages 1–3
+
+These corrections use the files already on disk. They do not replace the archived tables.
+
+1. **Family MAE and $R^2$ in the Stage 3 prose** do not match `results/stage3_family_errors_audited.csv`. The RMSE values do match. Use the CSV: stainless MAE $83.6\text{ MPa}$, $R^2 = 0.412$; structural MAE $132.1\text{ MPa}$, $R^2 = 0.516$; maraging MAE $186.3\text{ MPa}$, $R^2 = 0.852$; tool MAE $145.7\text{ MPa}$, $R^2 = -0.082$. Tool steels remain $n = 17$.
+2. **LOCO threshold.** The pre-stated bar $231.06\text{ MPa}$ is $1.5 \times 154.04$. The nested tuned random forest RMSE is $159.57\text{ MPa}$, so the matching bar is $239.36\text{ MPa}$. All five clusters pass either bar.
+3. **Gaussian-process length scales.** See the withdrawn sentence above. On the 25 outer training folds, the median length scales in standardized non-iron space are Ti $0.57$, Ni $0.80$, Co $1.00$, Nb $1.17$, C $2.88$, Al $3.00$, Mo $3.24$, Cr $5.11$, Si $6.06$, Mn $7.10$, N $7.37$, V $8.46$, and W $100$. Tungsten sits on the upper bound of $100$ in every fold, so that length scale is censored by the bound we copied from Stage 3. It is not a precise number. Shorter means the smooth model is more sensitive to that solute. This is not the same quantity as a SHAP magnitude.
+
+---
+
+## Stage 4: SHAP, and what it is allowed to say
+
+### 1. What was done
+
+TreeSHAP was computed on the outer test rows of the same 25 grouped splits. The headline model was declared first: the default random forest on the 13 non-iron weight percents, path-dependent TreeSHAP. Tuned random forest and tuned XGBoost were fit with the hyperparameters already stored per split. On the 13-feature fits those hyperparameters had been chosen on 14 features, so they are a sensitivity check, not a fresh nested tuning.
+
+A label of consistent or inconsistent was allowed only when all three 13-feature models agreed, mean absolute SHAP was at least the median element, and the predeclared Spearman threshold of $0.20$ was met in the way `verdict_for_element` states. The rules were checked on synthetic cases before the steel data were touched. SHAP additivity held: the worst reconstruction error was $0.002\text{ MPa}$.
+
+Dropping iron did not produce a distinguishable change in error. Default random forest, 13 features: RMSE $156.5 \pm 26.9\text{ MPa}$, MAE $116.1\text{ MPa}$, $R^2 = 0.700$. The paired difference versus the 14-feature forest is $-3.8\text{ MPa}$, Nadeau–Bengio 95% interval $[-9.4,\ +1.9]$, corrected $p = 0.18$. The 13-feature attributions can be read as the effect of replacing iron.
+
+This run's 14-feature default forest came out at RMSE $160.3\text{ MPa}$, against the archived Stage 3 value $158.3\text{ MPa}$. The gap is $+2.0\text{ MPa}$, inside the fold standard deviation of about $27\text{ MPa}$. The cluster partition is the same one (201 clusters, largest sizes 21, 16, 14, 13, 10). The gap is an execution difference, and the Stage 3 table remains the archived benchmark.
+
+### 2. What the attributions say
+
+Mean absolute SHAP on the headline model, averaged across the 25 folds: Ti $119\text{ MPa}$, C $62$, Co $43$, Al $39$, then a gap to Mn $16$, Si $16$, Cr $12$, Mo $11$, Ni $10$. Nitrogen and tungsten are below $1\text{ MPa}$. Rank order is stable across folds (median pairwise Spearman $0.90$, worst pair $0.74$). Path-dependent and interventional rankings agree (median Spearman $0.98$, worst fold $0.91$). Permutation importance, in RMSE increase, agrees with mean absolute SHAP (Spearman $0.97$).
+
+The consensus labels, and the reason when the label is not the raw correlation:
+
+| Element | Consensus | What the files actually show |
+|:---|:---|:---|
+| Al | consistent | Where Ni $\ge 12\text{ wt}\%$, higher Al receives positive SHAP (headline $\rho = 0.76$). All three models agree. Mean absolute SHAP is $39\text{ MPa}$. |
+| Co | consistent | Positive in the global set ($\rho = 0.79$) and inside both large families. Mean absolute SHAP is $42\text{ MPa}$. The prior called cobalt a weak effect. The attribution is not weak. The sign matches the prior. The size does not match the word "weak". |
+| Ti | unclear | Largest attribution in every model ($119$, $91$, and $79\text{ MPa}$). Inside maraging steels the association is positive ($\rho = 0.82$ on the default forest, and positive on the tuned models too). Inside stainless steels the tuned models reverse it ($\rho = -0.21$ and $-0.45$), so the three models do not agree and the consensus stays unclear. |
+| Ni | unclear | Global $\rho = 0.84$, but the default forest's mean absolute SHAP is only $9.7\text{ MPa}$, below its median element, and inside maraging steels that forest's nickel association reverses ($\rho = -0.36$). The tuned models keep a positive nickel association. The credit for nickel is model-dependent. Consistent with nickel's role being shared with titanium and cobalt, not with a claim that nickel has been shown to strengthen. |
+| Cr | unclear | Global $\rho = -0.65$. Inside stainless steels $\rho = -0.21$. Inside maraging steels $\rho = +0.65$. The between-family story is not enough, and the two families do not share a sign. |
+| Mo | unclear | Inside maraging steels $\rho = -0.83$, which is opposite the usual molybdenum-precipitate expectation. Mean absolute SHAP is $10\text{ MPa}$, just under the predeclared median cutoff, so the rule refuses an "inconsistent" label. The negative association is still in the table and should be said out loud. |
+| C | unclear | No sign was declared. Mean absolute SHAP is $62\text{ MPa}$, second only to titanium. Stainless $\rho = +0.55$, maraging $\rho = -0.77$. The association changes family. |
+| N, W | unclear | Sparse. Tungsten is in $5.1\%$ of rows above $0.01\text{ wt}\%$. |
+| Fe | unclear | Closure. Not a separate mechanism. |
+| Mn, Si, Nb, V | unclear | No sign was declared, so they were not scored. Niobium's global $\rho$ is $-0.82$ with a small attribution ($8.5\text{ MPa}$). That number is reported and not turned into a mechanism. |
+
+Interactions for the four predeclared pairs: Ni–Ti and Co–Mo agree in sign between mean SHAP interaction and the corner of a full-data partial-dependence grid. Cr–Ni and C–Cr do not. The Co–Mo partial-dependence corner contrast is $+68\text{ MPa}$ on the full-data model, while the mean SHAP interaction across the 25 test folds is $+0.5\text{ MPa}$. The sign agrees and the size does not. The partial-dependence grid is explanatory and is not a cross-validated effect.
+
+Figures: `fig14` to `fig21`. Tables: `results/stage4_*.csv`.
+
+### 3. Questions
+
+### Q13. "SHAP says titanium matters. Have you proved that titanium precipitates strengthen these steels?"
+> **Student Answer:**
+> "No, sir/ma'am. SHAP attributes the model's prediction. Titanium has the largest mean absolute SHAP, about $119\text{ MPa}$ on the default forest, and inside the maraging group the association is positive, which is consistent with the Ni3Ti literature. Inside the stainless group the tuned models give titanium a negative association, so we did not allow a single consistent label. The dataset has no precipitates and no aging treatment in it."
+
+### Q14. "Why is chromium negative?"
+> **Student Answer:**
+> "Globally, yes, $\rho = -0.65$. Inside the maraging group the same correlation is $+0.65$, and inside stainless steels it is $-0.21$. Chromium is marking different parts of the dataset, not a single strengthening mechanism. We left the label as unclear."
+
+---
+
+## Stage 5: Local inverse design
+
+### 1. What was done
+
+The screening model is the default random forest on 13 non-iron features, fit on all 312 alloys. Every score below is in-sample. It is not a new cross-validated error. The lower confidence bound is predicted yield minus one tree-standard-deviation. That spread is disagreement among trees, not a calibrated probability. The Gaussian process from the Stage 3 kernel is a second uncertainty.
+
+The search does not wander the whole composition box. Each Optuna trial starts at a training alloy and moves each solute by at most half of its training standard deviation, clipped to the training min and max. Iron is the balance. A trial is feasible only if the predicted yield is at least $1500\text{ MPa}$, the applicability domain says inside, and iron stays inside its training range. $1500\text{ MPa}$ is inside the measured range. Two seeds, 400 trials each. Criticality is weight percent times the EU 2023 supply-risk weights. It is not a price.
+
+### 2. What came out
+
+Seed 42 had 142 feasible trials. Seed 43 had 235. The top ten from each seed are all in-domain variants, not copies of a training row. They are still local: every one of them starts from alloy 296, 299, or 302.
+
+The two seeds do not agree. The Euclidean distance between their mean top-ten compositions is $4.9\text{ wt}\%$ in the non-iron features, and the Jaccard overlap of their nearest training alloys is $0.25$. Seed 42 stays near $18\text{ wt}\%$ Ni, about $2\text{ wt}\%$ Co and about $1.9\text{ wt}\%$ Ti, with predicted means near $2000\text{ MPa}$ and tree disagreement near $340\text{ MPa}$, so the lower bound is near $1660\text{ MPa}$. Seed 43 also finds a low-titanium, higher-molybdenum neighborhood and a high-nickel neighborhood with cobalt pushed down.
+
+The best lower bound among those candidates is $1665\text{ MPa}$. The best in-sample lower bound among the 312 training alloys is $2408\text{ MPa}$. The search did not find a composition that beats the training alloys on the objective it was given. The 95th percentile of the training lower bounds is $1739\text{ MPa}$, and the candidates sit below that too.
+
+### 3. Questions
+
+### Q15. "So did the optimizer design a better steel?"
+> **Student Answer:**
+> "No, sir/ma'am. It proposed in-domain variants of three training alloys. Their lower confidence bounds are below the best alloys already in the file, the two random seeds do not land in the same place, and the tree disagreement on the high predictions is a few hundred MPa. We would not take one of these to a melting shop."
+
+---
+
+## Stage 6: The front, and the weldability indicator we did not use
+
+### 1. What was done
+
+NSGA-II, 600 trials, seed 42, same local moves. Maximize the lower confidence bound, minimize the criticality index. The IIW carbon equivalent and Pcm were computed and were not objectives.
+
+The CET validity window used with EN 1011-2 method B (Ni up to $2.5\text{ wt}\%$, Mo up to $0.75$, Cr up to $1.5$, Mn from $0.50$ to $1.90$, Ti up to $0.12$, and the other published bounds) contains **0 of the 312 alloys**. Manganese is outside for 289 alloys, molybdenum for 274, chromium for 242, nickel for 216. A carbon equivalent on this file mostly restates that these are not the ferritic structural steels the formula was built for. Figure `fig25` is that count.
+
+### 2. What came out
+
+432 of 600 trials were feasible. The feasible front has 13 rows, 11 of them distinct at two-decimal composition. Lower bounds run from $1536$ to $2212\text{ MPa}$. Criticality runs from $11.2$ to $16.1$. None of the front is inside the CET window.
+
+The high end of the front is a high-nickel composition, about $17\text{–}20\text{ wt}\%$ Ni, with titanium often sitting on the training ceiling of $2.50\text{ wt}\%$ and cobalt often sitting on the training floor near $0.01\text{ wt}\%$. Predicted means are about $2200\text{–}2400\text{ MPa}$, with tree disagreement still $150\text{–}200\text{ MPa}$. The best lower bound on the front, $2212\text{ MPa}$, is still below the best training-alloy lower bound of $2408\text{ MPa}$.
+
+The low-criticality end is called "tool" only by the Stage 3 composition rule (carbon at least $0.35\text{ wt}\%$). That rule's group has $n = 17$ in the data, and those front points also sit on the carbon ceiling. They are edge points of the box, not a designed tool steel.
+
+Stripping cobalt is how the front lowers criticality. The strongest training alloy, measured $2510\text{ MPa}$, has an in-sample criticality index of $47.5$ because it carries about $11.5\text{ wt}\%$ Co. The front's criticality is $11\text{–}16$ because cobalt has been pushed out. The model still predicts high strength there. The lower bound does not beat the cobalt-bearing training alloys, and several coordinates are on the wall of the box. That is a tradeoff on an in-sample surface, not a recommendation to melt a cobalt-free alloy.
+
+Figure `fig24`. Tables `results/stage6_*.csv`.
+
+### 3. Questions
+
+### Q16. "Why didn't you optimize weldability?"
+> **Student Answer:**
+> "The IIW carbon equivalent is a real formula, and it is the wrong tool here. Its published validity window contains none of our 312 alloys. Most of them fail the manganese, molybdenum, chromium, or nickel bound. Maraging-type compositions in this file are low in carbon and high in nickel. A high carbon equivalent would mostly have been a restatement of nickel and chromium. We counted the failures and left the formula off the objective."
+
+### Q17. "Your mild-steel test still prints a number around 1350 MPa. Is that a prediction?"
+> **Student Answer:**
+> "No. The screening script flags it as outside the domain. The distance to the nearest training alloy is $1.94$, and the domain cutoff is $1.85$. The printed $1354\text{ MPa}$ is what the forest returns when you force it. It is not a yield strength for mild steel. The whole dataset starts at $1006\text{ MPa}$."
+
+---
+
+## Stage 7: What is left for the defense
+
+The screening command is `python src/stage7_screen_alloy.py`. `--example mild-steel` must come back outside the domain. `--example training-strongest` is training alloy 20, measured $2510.3\text{ MPa}$, and the script says the score is in-sample. Notebooks `04`, `05`, and `06` only read the tables. They do not fit another model.
+
+The external test on the supervisor's dataset is not done. It waits on that file. The applicability-domain link between distance and error is still exploratory.
 
 
