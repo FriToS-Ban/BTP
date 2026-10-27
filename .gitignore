@@ -6,3 +6,9 @@ venv/
 .env
 *.pt
 .DS_Store
+
+# Internal reference files — not for repository viewers
+NOTES.md
+LOG.md
+PROJECT_STATE.md
+WORK_PLAN.md
