@@ -52,6 +52,7 @@ DEPENDENCE_ELEMENTS = ["Ti", "Ni", "Co", "Cr", "Mo", "C", "Al", "Si"]
 INTERACTION_PAIRS = [("Ni", "Ti"), ("Co", "Mo"), ("Cr", "Ni"), ("C", "Cr")]
 HEADLINE = "default_rf_13"
 CONSENSUS_MODELS = ["default_rf_13", "tuned_rf_13", "tuned_xgb_13"]
+MODEL_LABELS = {"default_rf_13": "Default RF", "tuned_rf_13": "Tuned RF", "tuned_xgb_13": "Tuned XGBoost"}
 
 # Directions declared before the run. Only these can receive a
 # consistent or inconsistent label. Every other element stays unclear.
@@ -583,7 +584,7 @@ def _plot_bars(stability):
         (-width, 0, width), CONSENSUS_MODELS, ("#1a5276", "#b9770e", "#196f3d")
     ):
         sub = focus[focus["model"] == name].set_index("element").loc[elements]
-        ax.bar(xpos + offset, sub["mean_abs_shap_across_folds"], width=width, color=color, label=name)
+        ax.bar(xpos + offset, sub["mean_abs_shap_across_folds"], width=width, color=color, label=MODEL_LABELS[name])
     ax.set_xticks(xpos)
     ax.set_xticklabels(elements)
     ax.set_ylabel("Mean |SHAP| across 25 folds (MPa)")
