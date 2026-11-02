@@ -7,7 +7,7 @@ venv/
 *.pt
 .DS_Store
 
-# Internal reference files — not for repository viewers
+# Local working notes
 NOTES.md
 LOG.md
 PROJECT_STATE.md
