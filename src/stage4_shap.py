@@ -629,8 +629,8 @@ def _plot_dependence(headline, df_wt, families):
         ax.set_xlabel("wt%")
         ax.set_ylabel("SHAP (MPa)")
     handles = [Line2D([0], [0], marker="o", color="none", markerfacecolor=c, label=f, markersize=6) for f, c in FAMILY_COLORS.items()]
-    fig.legend(handles=handles, frameon=False, loc="upper right", ncol=4)
-    fig.tight_layout()
+    fig.legend(handles=handles, frameon=False, loc="upper center", ncol=4)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     fig.savefig(os.path.join(FIG_DIR, "fig16_shap_dependence.png"))
     plt.close(fig)
 
