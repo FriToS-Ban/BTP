@@ -42,7 +42,7 @@ def code(source):
 
 nb4 = [
     md(
-        "# Stage 4. What the trees are using\n\n"
+        "# Stage 4: SHAP Interpretation\n\n"
         "This notebook reads the Stage 4 tables. The model is a composition-only predictor "
         "of yield strength. SHAP attributes the prediction. It does not prove a strengthening mechanism.\n\n"
         "The headline model is the default random forest on the 13 non-iron weight percents. "
@@ -76,7 +76,7 @@ nb4 = [
 
 nb5 = [
     md(
-        "# Stage 5. Local inverse design\n\n"
+        "# Stage 5: Local Inverse Design\n\n"
         "The screening model is fit on all 312 alloys. Scores in this notebook are in-sample. "
         "A feasible trial has a predicted yield of at least 1500 MPa, sits inside the applicability "
         "domain, and keeps iron inside the training range. The criticality axis is wt% times the "
@@ -90,7 +90,7 @@ nb5 = [
         "scales = pd.read_csv('../results/stage5_gp_length_scale_summary.csv')\n"
         "display(audit.T)\n"
         "display(scales)\n"
-        "cols = ['seed', 'rank_within_seed', 'pred_mpa', 'lcb_mpa', 'tree_std_mpa', 'criticality', 'domain_label', 'family']\n"
+        "cols = ['seed', 'rank_within_seed', 'pred_mpa', 'lcb_mpa', 'tree_std_mpa', 'criticality', 'domain_label']\n"
         "display(candidates[cols])\n"
         "display(Image(filename='../figures/fig22_inverse_search.png'))\n"
         "display(Image(filename='../figures/fig23_candidates_ti_ni.png'))\n"
@@ -99,7 +99,7 @@ nb5 = [
 
 nb6 = [
     md(
-        "# Stage 6. A two-objective front\n\n"
+        "# Stage 6: Two-Objective Pareto Front\n\n"
         "The axes are the lower confidence bound and the criticality index. "
         "The IIW carbon equivalent is not an axis. The validity figure shows why: "
         "the published CET window does not cover these nickel and molybdenum levels.\n"
