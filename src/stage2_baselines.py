@@ -466,9 +466,9 @@ def compute_learning_curve(X_wt, y, headline_groups):
     annotation_text = (
         "Empirical Finding:\n"
         "Validation error steadily falls\n"
-        "(from 240.4 to 158.3 MPa),\n"
+        f"(from {curve_df['Val_RMSE_Mean'].iloc[0]:.1f} to {curve_df['Val_RMSE_Mean'].iloc[-1]:.1f} MPa),\n"
         "suggesting performance is still\n"
-        "data-limited (falling at N=249)."
+        f"data-limited (falling at N={curve_df['Effective_Train_Samples'].iloc[-1]})."
     )
     ax.text(0.04, 0.45, annotation_text, transform=ax.transAxes, fontsize=9,
             bbox=dict(boxstyle='round,pad=0.5', facecolor='#f8f9fa', edgecolor='#bdc3c7'))
