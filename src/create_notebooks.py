@@ -106,7 +106,7 @@ nb1_cells = [
         "metadata": {},
         "source": [
             "### 2. Target Yield Strength Distribution\n",
-            "Inspect the bimodal character of yield strength, reflecting high-strength maraging/tool steels vs. structural/stainless grades."
+            "The distribution is right-skewed, with most alloys between 1000 and 1800 MPa and a small group above 2000 MPa. Every alloy in the dataset is above 1000 MPa."
         ]
     },
     {
@@ -132,7 +132,7 @@ nb1_cells = [
         "metadata": {},
         "source": [
             "### 3. Pearson Correlation Structure\n",
-            "Examine solute correlations with yield strength. Observe the strong positive correlation with Ti (+0.51) and Ni (+0.26), consistent with $\\eta-\\text{Ni}_3\\text{Ti}$ precipitation strengthening in maraging steels."
+            "Examine solute correlations with yield strength. Titanium (+0.51) and nickel (+0.25) have the largest positive linear correlations, which is consistent with $\\eta-\\text{Ni}_3\\text{Ti}$ precipitation strengthening in maraging steels. A correlation cannot establish a mechanism."
         ]
     },
     {
@@ -146,7 +146,7 @@ nb1_cells = [
             "corrs = df_corr.corr()['Yield_Strength'].drop('Yield_Strength').sort_values(ascending=False)\n",
             "\n",
             "plt.figure(figsize=(9, 4.5))\n",
-            "sns.barplot(x=corrs.values, y=corrs.index, palette='coolwarm')\n",
+            "sns.barplot(x=corrs.values, y=corrs.index, hue=corrs.index, palette='coolwarm', legend=False)\n",
             "plt.title(\"Elemental Linear Correlation with Yield Strength (wt%)\", fontweight='bold')\n",
             "plt.xlabel(\"Pearson Correlation Coefficient r\", fontweight='bold')\n",
             "plt.tight_layout()\n",
@@ -170,7 +170,7 @@ nb2_cells = [
             "---\n",
             "### Key Methodological Highlights:\n",
             "1. **Near-Twin Leakage Trap:** Naive random k-fold cross-validation inflates performance because near-duplicate alloys appear across train and test folds.\n",
-            "2. **Grouped Cross-Validation:** Single-linkage clustering groups alloys within $\\tau = 0.50$ wt% into 201 distinct alloy families, forming the headline evaluation protocol.\n",
+            "2. **Grouped Cross-Validation:** Single-linkage clustering groups alloys within $\\tau = 0.50$ wt% into 201 clusters, forming the headline evaluation protocol.\n",
             "3. **Collinearity Audit:** Dropping Iron (Fe) from linear models removes the sum-to-100 constraint singularity.\n",
             "4. **Applicability Domain Audit:** Statistically auditing distance-error relationships at the cluster level."
         ]
@@ -217,7 +217,7 @@ nb2_cells = [
         "metadata": {},
         "source": [
             "### 2. Paired Model Comparisons Across 25 Splits\n",
-            "Evaluating whether Ridge (without Fe) is statistically superior to Ridge (with Fe), and whether Random Forest and XGBoost are statistically distinguishable."
+            "Evaluating whether Ridge (without Fe) differs from Ridge (with Fe), and whether Random Forest and XGBoost differ. These are uncorrected paired tests. Stage 3 applies the Nadeau-Bengio correction, under which the Ridge difference is no longer significant."
         ]
     },
     {
