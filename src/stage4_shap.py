@@ -709,7 +709,8 @@ def _plot_perm_vs_shap(perm_df, stability):
     rho, p_value = spearmanr(perm.loc[shared], shap_imp.loc[shared])
     ax.set_xlabel("Permutation importance, RMSE increase (MPa)")
     ax.set_ylabel("Mean |SHAP| (MPa)")
-    ax.set_title(f"Default RF, 13 features\nSpearman {rho:.2f}, p={p_value:.3f}")
+    p_text = "p < 0.001" if p_value < 0.001 else f"p = {p_value:.3f}"
+    ax.set_title(f"Default RF, 13 features\nSpearman {rho:.2f}, {p_text}")
     fig.savefig(os.path.join(FIG_DIR, "fig21_shap_vs_permutation.png"))
     plt.close(fig)
 
