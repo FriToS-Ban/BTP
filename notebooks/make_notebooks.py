@@ -321,6 +321,90 @@ table: the calibrated kinetics against every independent dataset."""),
         code("""pd.read_csv(R / "s08_kinetic_calibration_cv_metrics.csv")"""),
         code("""pd.read_csv(R / "s08_kinetic_calibration_transfer.csv").set_index("kinetics").T"""),
     ],
+    "09_hardening_tempering": [
+        md("""# 9. The rest of the route: hardening, tempering and stress relieving
+
+Versions 1-2 modelled furnace cooling and air cooling. This notebook adds the other three classic treatments:
+**hardening** (a quench in oil, water or brine), **tempering** and **stress relieving**. The data are 324
+quenched-and-tempered bars of 28 AISI grades from the open Birbilis et al. (2025) database, each with the quench
+medium, the austenitising and tempering temperatures and the bar size (13, 25, 50 or 100 mm) written out."""),
+        code(SETUP),
+        code("""pd.read_csv(R / "s09_qt_dataset_summary.csv").pivot_table(index="section_mm", columns="quench_medium", values="bars")"""),
+        md("""## Hardening: the quench heat flow
+Radial conduction in the bar with Grossmann's severity of quench; checked against the exact Bessel solution
+(tests/test_quench.py). Right: the model's ideal critical diameter against Grossmann's D_I from the ASTM A255
+factors, a check that uses none of our data."""),
+        code("""pd.read_csv(R / "s09_quench_rates.csv").pivot_table(index="D_mm", columns=["medium", "r_over_R"], values="rate700_K_s").round(1)"""),
+        code("""fig("fig31_quench_and_hardenability", 1000)"""),
+        code("""h = pd.read_csv(R / "s09_hardenability_check.csv")
+h.assign(ratio_recalibrated=h.DI_model_calibrated_mm / h.DI_A255_mm, ratio_published=h.DI_model_published_mm / h.DI_A255_mm).round(2)"""),
+        md("""## Tempering: one master curve
+P = T(20 + log t). The constants were fitted on the bars, with a grade bootstrap."""),
+        code("""pd.read_csv(R / "s09_tempering_constants.csv")"""),
+        code("""fig("fig35_tempering_curves", 1000)"""),
+        md("""## The model ladder (leave one grade out) and the mass effect"""),
+        code("""b = pd.read_csv(R / "s09_qt_benchmark.csv"); b.pivot_table(index="model", columns="target", values="RMSE").round(1)"""),
+        code("""fig("fig32_qt_model_ladder", 1000); fig("fig34_qt_mass_effect", 1000)"""),
+        code("""pd.read_csv(R / "s09_qt_kinetics_check.csv").round(1)"""),
+        md("""## The five classic treatments, side by side
+Annealing, normalising, hardening, hardening + tempering and stress relieving of six grades as 25 mm bars."""),
+        code("""ft = pd.read_csv(R / "s09_five_treatments.csv")
+ft[["grade", "treatment", "medium", "microstructure", "UTS_MPa_pred", "UTS_MPa_lo90", "UTS_MPa_hi90", "El_pct_pred", "HV"]].round(0)"""),
+        code("""fig("fig36_five_heat_treatments", 1000)"""),
+        md("""## A live example: an EN19-type (42CrMo4) bar of 30 mm
+The same call works for any composition; the tool flags microalloyed, TMCP-type and boron steels."""),
+        code("""from steelml.predictor import SteelPredictor
+sp = SteelPredictor.load()
+comp = {"C": 0.42, "Mn": 0.75, "Si": 0.25, "Cr": 1.05, "Mo": 0.22, "Ni": 0.10}
+out = sp.compare_treatments(comp, section_mm=30, temper_T=600)
+out[["treatment", "medium", "microstructure", "UTS_MPa_pred", "UTS_MPa_lo90", "UTS_MPa_hi90", "YS_MPa_pred", "El_pct_pred", "HV", "notes"]].round(0)"""),
+        md("""## Stress relieving and precipitation"""),
+        code("""pd.read_csv(R / "s09_stress_relief_after_temper.csv").round(0)"""),
+        code("""fig("fig37_stress_relief_and_precipitation", 1000)"""),
+    ],
+    "10_assumptions_sensitivity": [
+        md("""# 10. Every assumption, and how much it matters
+
+A model is only as credible as its assumptions. This notebook lists every condition the models rely on, shows
+how one inferred condition (the bar size of the handbook's normalised data) turned out to be documented in a
+second source, and measures how much each remaining assumption matters by retraining the models with it moved
+to the ends of its range."""),
+        code(SETUP),
+        code("""pd.read_csv(R / "s10_assumptions.csv")"""),
+        md("""## The handbook's normalised data are 25 mm bars
+Version 2 inferred 50 mm from the physics alone. The Birbilis database has the same values with the bar size."""),
+        code("""pd.read_csv(R / "s10_handbook_section_match.csv").round(1)"""),
+        md("""## One assumption at a time (retrained, leave one grade out)"""),
+        code("""pd.read_csv(R / "s10_oat_anneal_normalise.csv").round(1)"""),
+        code("""pd.read_csv(R / "s10_oat_quench_temper.csv").round(1)"""),
+        code("""fig("fig38_assumption_sensitivity", 1100)"""),
+        md("""## Global sensitivity (Morris elementary effects)"""),
+        code("""pd.read_csv(R / "s10_morris.csv").pivot_table(index="factor", columns="output", values="mu_star").round(2)"""),
+        code("""fig("fig39_morris_sensitivity", 1100)"""),
+        md("""## A test across bar sizes
+Normalised bars of 13-100 mm and grades never seen in training."""),
+        code("""pd.read_csv(R / "s06_bar_sizes_metrics.csv").round(2)"""),
+        code("""fig("fig42_normalising_bar_size", 1100)"""),
+    ],
+    "11_kinetic_uncertainty": [
+        md("""# 11. How uncertain is the transformation model?
+
+The kinetic constants were calibrated on the SAE hardenability bands. Here their posterior is sampled with
+four adaptive Metropolis chains (with convergence checks), the draws are pushed through to predictions, and
+we ask whether the parameter uncertainty explains the errors on 423 independent CCT-atlas measurements."""),
+        code(SETUP),
+        code("""pd.read_csv(R / "s11_mcmc_diagnostics.csv")"""),
+        code("""pd.read_csv(R / "s11_posterior_summary.csv").round(3)"""),
+        code("""pd.read_csv(R / "s11_posterior_correlation.csv", index_col=0).round(2)"""),
+        code("""fig("fig40_kinetic_posterior", 1100)"""),
+        md("""## Propagation and independent coverage
+If the parameter uncertainty explained the errors, about 90 % of the measured points would fall inside the
+90 % band. They do not: the error is structural (the form of the equations)."""),
+        code("""pd.read_csv(R / "s11_cct_atlas_coverage.csv").round(3)"""),
+        code("""pd.read_csv(R / "s11_representative_bands.csv").round(3)"""),
+        code("""d = pd.read_csv(R / "s11_dilatometry_bands.csv"); print("inside the 90 % band:", round(d.inside.mean(), 2)); d.round(0)"""),
+        code("""fig("fig41_kinetic_uncertainty_propagation", 1100)"""),
+    ],
 }
 
 
