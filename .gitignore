@@ -1,11 +1,15 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+.pytest_cache/
 .venv/
 venv/
 .env
 *.pt
 .DS_Store
+
+# raw downloads (re-created by pipeline/s00_fetch_data.py)
+data/external/
 
 # Local working notes
 NOTES.md
