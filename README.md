@@ -1,4 +1,4 @@
-# Heat treatment of carbon and low-alloy steels: microstructure and tensile properties with physics-informed ML
+# Annealing, normalising, hardening, tempering and stress relieving of carbon and low-alloy steels: microstructure, hardness and tensile properties predicted with physics-informed machine learning
 
 **B.Tech Project (MTP-400A), Department of Metallurgical and Materials Engineering, IIT Roorkee**
 **Authors:** Aviral Singh, Shibasish Banerjee  |  **Supervisor:** Dr. Anish Karmakar
@@ -7,20 +7,21 @@
 
 ## What this project does
 
-Give it the composition of a carbon or low-alloy steel and a heat treatment, and it tells you what kind of
-steel it is, what microstructure forms, and what yield strength, tensile strength, uniform and total
-elongation and hardness to expect, each with a 90 % interval. It covers the five classic treatments:
+Give it the composition of a carbon or low-alloy steel and a heat treatment, and it tells you what kind of steel
+it is, what microstructure forms and what properties to expect, for the five classic treatments. What it gives,
+and how far each part is tested, differs by treatment:
 
-| Treatment | What the model computes |
-|---|---|
-| **Annealing** (furnace cooling) | coarse pearlite + ferrite, softest state |
-| **Normalising** (still air, any bar size) | finer pearlite and ferrite, or bainite in hardenable steels |
-| **Hardening** (oil, water or brine quench of a round bar) | martensite, bainite, ferrite + pearlite at the specimen position, hardness |
-| **Tempering** (any temperature and time) | tempered martensite: strength, ductility, embrittlement warnings |
-| **Stress relieving** | microstructure unchanged, residual-stress bound, softening only above the tempering parameter |
+| Treatment | What the model predicts | Tested against data the models never saw |
+|---|---|---|
+| **Annealing** (furnace cooling) | constituents, pearlite spacing, grain size; YS, UTS, elongation, hardness with 90 % intervals; ITT as an estimate | handbook grades left out (UTS 47 MPa); annealed bars of 7 new grades (UTS 20 MPa) |
+| **Normalising** (still air, any bar size) | the same; bainite in hardenable steels | handbook grades left out; 114 bars at other sizes or of new grades (UTS 68 MPa); literature; structural members |
+| **Hardening** (oil, water or brine quench) | constituents and as-quenched hardness; no tensile values (untempered martensite is too brittle) | Jominy bands of the H-steels (5.9 HRC); bars only indirectly (tempered bars; Grossmann's D_I, model about 1.6 times too hardenable) |
+| **Tempering** (any temperature and time) | YS, UTS, elongation with 90 % intervals; hardness (derived); embrittlement flags | 324 quenched-and-tempered bars of 28 grades, left out by grade (UTS 75 MPa) |
+| **Stress relieving** | subcritical check, residual-stress upper bound, softening only above the tempering parameter | **not tested**: no open data found; built from EN 1993-1-2 and Hollomon-Jaffe additivity |
 
 The core research question, set by our supervisor, is **furnace cooling vs air cooling**: what changes, by how
-much, why, and how the bar size matters. Version 3 adds the rest of the route after a review by a fellow student.
+much, why, and how the bar size matters. Version 3 adds the other three treatments after a review by a fellow
+student.
 
 The model is a chain that follows the metallurgy. Machine learning is used where the physics alone is not good
 enough, and the physics is kept where the data alone cannot be trusted:
@@ -154,6 +155,8 @@ The full list is in `reports/REPORT.md`, Section 11. The main ones:
 * The kinetics are semi-empirical, with a structural error. They over-predict Grossmann's D_I, most for
   high-carbon steels, and overstate the bar-size effect of normalising.
 * The quench uses Grossmann's constant heat-transfer coefficient (no boiling stages) and long round bars.
+* Not tested against measurements: stress relieving (no open data; it follows established rules), and the
+  as-quenched hardness of quenched bars (tested only through the Jominy bands, the tempered bars and D_I).
 * Estimated rather than trained: precipitation strengthening, uniform elongation, ferrite grain size and ITT.
   As-quenched tensile properties are not given, because untempered martensite is too brittle for a meaningful
   tensile test.

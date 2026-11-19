@@ -1,4 +1,4 @@
-<h1>Furnace cooling versus air cooling of carbon and low-alloy steels, and the rest of the heat-treatment route: a physics-anchored, uncertainty-aware prediction of microstructure and tensile properties</h1>
+<h1>Annealing, normalising, hardening, tempering and stress relieving of carbon and low-alloy steels: microstructure, hardness and tensile properties predicted with physics-anchored, uncertainty-aware machine learning</h1>
 
 <div class="authors">Aviral Singh, Shibasish Banerjee, Anish Karmakar*</div>
 <div class="affil">Department of Metallurgical and Materials Engineering, Indian Institute of Technology Roorkee, Roorkee 247667, India.
@@ -7,7 +7,7 @@
 <div class="box">
 <p><b>Highlights</b></p>
 <ul>
-<li>An open chain from composition and cooling route to microstructure and tensile properties, with calibrated 90 % intervals.</li>
+<li>An open chain from composition and heat treatment to microstructure, hardness and tensile properties for the five classic treatments, with calibrated 90 % intervals where the data allow.</li>
 <li>SAE hardenability bands of «jm_grades» steels show the Li et al. kinetics are too hardenable away from the quenched end.</li>
 <li>A cross-validated Bayesian recalibration of the bainite reaction transfers to independent dilatometry and a CCT atlas.</li>
 <li>Physics carries extrapolation to new cooling rates; machine learning corrects the textbook structure-property laws.</li>
@@ -20,10 +20,14 @@
 <h2>Abstract</h2>
 <p>Full annealing (furnace cooling) and normalising (still-air cooling) are the two most common heat treatments of carbon and
 low-alloy steels, yet their outcome for an arbitrary composition and bar size is usually read from handbook tables for a few
-grades. We present an open, end-to-end model that predicts, from the composition, the steel category, the microstructure
-after either route (ferrite, pearlite, bainite and martensite fractions, pearlite spacing, ferrite grain size) and the
-yield strength, tensile strength, uniform and total elongation, hardness and impact transition temperature, each with a
-calibrated 90 % interval. The chain combines empirical thermodynamics, a heat balance of the cooling bar, the
+grades. We present an open, end-to-end model that predicts, from the composition and the heat treatment, the steel category,
+the microstructure and the properties of carbon and low-alloy steels for the five classic treatments. For annealing and
+normalising it gives the constituents, pearlite spacing and ferrite grain size, and the yield strength, tensile strength,
+uniform and total elongation and hardness with calibrated 90 % intervals, plus an impact transition temperature as an
+estimate; for hardening, the constituents and the as-quenched hardness (no tensile properties of untempered
+martensite); for tempering, strength and elongation with intervals; for stress relieving, a residual-stress bound and
+re-tempering by Hollomon-Jaffe additivity, which follow established rules and are not tested against measurements.
+Furnace cooling against air cooling, the question the study started from, remains its core. The chain combines empirical thermodynamics, a heat balance of the cooling bar, the
 Kirkaldy-Venugopalan / Li et al. transformation kinetics, the Gladman-McIvor-Pickering and Maynier structure-property
 laws, and Gaussian-process models that learn a multiplicative correction to the physics. Against the SAE end-quench
 hardenability bands of «jm_grades» steels the published kinetics were too hardenable away from the quenched end; a Bayesian
@@ -41,7 +45,7 @@ register of assumptions corrected the bar size of the handbook's normalised data
 50 mm). A Markov-chain Monte Carlo posterior of the kinetic constants, propagated to an independent CCT atlas, shows that
 the transformation model's errors are structural rather than parametric.</p>
 <p class="kw"><b>Keywords:</b> normalising; full annealing; continuous cooling transformation; hardenability; Jominy;
-physics-informed machine learning; Gaussian process; conformal prediction</p>
+physics-informed machine learning; Gaussian process; conformal prediction; quenching; tempering; stress relieving</p>
 
 <h2>1. Introduction</h2>
 <p>Whether a steel bar is cooled with the furnace or in still air decides how its austenite transforms, and therefore its
@@ -259,8 +263,9 @@ data must be tested on others: a hardness-only calibration can trade errors betw
 calibration was accepted because it moved the bainite start onto independent dilatometry and improved independent hardness and
 fraction data. The main limitations are the small and old training sets (33 handbook grades and «qt_grades» quenched-and-tempered grades at nominal
 compositions, with one inferred furnace rate), the structural error of the semi-empirical kinetics, Grossmann's constant
-heat-transfer coefficient for the quench, the estimated nature of precipitation strengthening, uniform elongation, grain size and
-toughness, and the domain shift to modern rolled products, which the tool now detects and declines.</p>
+heat-transfer coefficient for the quench, the as-quenched hardness of bars being tested only indirectly, stress relieving
+not being tested against measurements at all (no open data), the estimated nature of precipitation strengthening, uniform
+elongation, grain size and toughness, and the domain shift to modern rolled products, which the tool now detects and declines.</p>
 
 <h2>6. Conclusions</h2>
 <ul>

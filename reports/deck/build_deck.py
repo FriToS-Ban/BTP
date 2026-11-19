@@ -127,14 +127,14 @@ def bench(N, model, target, col="RMSE_inAD"):
 # ---------------------------------------------------------------------------
 
 def build(N):
-    d = Deck("Singh & Banerjee · MTP-400A · MMED, IIT Roorkee", "Furnace vs air cooling")
+    d = Deck("Singh & Banerjee · MTP-400A · MMED, IIT Roorkee", "Heat treatment of steels")
 
     # 1 title
     d.add('''<div class="kicker">B.Tech Project MTP-400A · Department of Metallurgical and Materials Engineering, IIT Roorkee</div>
-<h1>Furnace cooling vs air cooling of carbon and low-alloy steels</h1>
-<p style="font-size:24px;line-height:1.35;color:#52514e;max-width:1000px">Predicting the microstructure and the tensile
-properties from the composition and the heat treatment (annealing, normalising, hardening, tempering, stress relieving),
-with physics-informed machine learning</p>
+<h1>Annealing, normalising, hardening, tempering and stress relieving of carbon and low-alloy steels</h1>
+<p style="font-size:24px;line-height:1.35;color:#52514e;max-width:1000px">Microstructure, hardness and tensile properties
+predicted from the composition and the heat treatment with physics-informed machine learning. The core question:
+furnace cooling vs air cooling.</p>
 <div class="meta">Aviral Singh &nbsp;·&nbsp; Shibasish Banerjee<br>Supervisor: Dr. Anish Karmakar<br>November 2026</div>''',
           cls="title-slide", footer=False)
 
@@ -174,14 +174,14 @@ The pearlite becomes finer and the ferrite grains smaller, so the steel is stron
 not form pearlite at all but bainite.</p>
 <p class="small muted">These are the two most common heat treatments in industry, but the choice between them is still
 made from handbook tables that list a few grades in a few conditions, with nothing for a new chemistry or a different
-bar size.</p></div>
+bar size. Hardening, tempering and stress relieving, the other three classic treatments, follow in the second part.</p></div>
 <div class="col">{svg}
 <div class="row small" style="gap:12px;margin-top:6px">
 <div class="col callout" style="border-left-color:#2a78d6"><p><b class="fc">Furnace cooled</b><br>coarse ferrite + pearlite:
 soft, ductile, machinable</p></div>
 <div class="col callout" style="border-left-color:#eb6834;background:#fdf1ec"><p><b class="ac">Air cooled</b><br>fine
 ferrite + pearlite, or bainite: stronger, harder</p></div></div></div></div>''',
-          title="The topic: the same steel, cooled in two different ways, ends up as two different materials",
+          title="The core question: the same steel, cooled in two different ways, ends up as two different materials",
           kicker="What this project is about")
 
     # 3 what the project does, with a worked example
@@ -189,7 +189,7 @@ ferrite + pearlite, or bainite: stronger, harder</p></div></div></div></div>''',
         return f'<div class="box"><span class="pill">{n}</span><b>{head}</b>{text}</div>'
     arrow = '<div class="arrow">&rarr;</div>'
     chain = arrow.join([
-        step("in", "You give", "the composition (wt %), the route (furnace or air) and the bar diameter"),
+        step("in", "You give", "the composition (wt %), the treatment (furnace, air, quench, temper, stress relief) and the bar diameter"),
         step(1, "Which steel?", "the category: plain carbon, Cr-Mo, Ni-Cr-Mo ..."),
         step(2, "How fast it cools", "the cooling curve of that bar in the furnace or in still air"),
         step(3, "What forms", "ferrite, pearlite, bainite, martensite, and at what temperature"),
@@ -306,8 +306,8 @@ def main():
     N = numbers()
     d = build(N)
     html_path = HERE / "deck.html"
-    html_path.write_text(d.html("Furnace vs air cooling of steels"))
-    pdf = ROOT / "reports" / "BTP_deck_furnace_vs_air_cooling.pdf"
+    html_path.write_text(d.html("Heat treatment of steels"))
+    pdf = ROOT / "reports" / "BTP_deck_heat_treatment_of_steels.pdf"
     render_pdf(html_path, pdf, args.png)
     pptx = pdf.with_suffix(".pptx")
     render_pptx(html_path, pptx)

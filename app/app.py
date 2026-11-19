@@ -1,5 +1,6 @@
-"""Interactive what-if tool: furnace cooling vs air cooling of a steel, and the
-five classic heat treatments side by side (second tab).
+"""Interactive what-if tool for the heat treatment of carbon and low-alloy steels:
+furnace cooling vs air cooling (first tab, the core question), and the five classic
+treatments side by side (second tab).
 
     python app/app.py            # then open http://127.0.0.1:7860
 
@@ -223,7 +224,7 @@ def build():
     import gradio as gr
 
     with gr.Blocks(title="Heat treatment of steels") as demo:
-        gr.Markdown("## Furnace cooling vs air cooling, and the rest of the heat-treatment route\n"
+        gr.Markdown("## Annealing, normalising, hardening, tempering and stress relieving of steels\n"
                     "Physics-informed ML (B.Tech project, IIT Roorkee). Pick a grade or type a composition (wt%).")
         with gr.Tab("Furnace vs air cooling"):
             with gr.Row():

@@ -319,7 +319,7 @@ def slides_closing(d, N):
           f"(Cr-Mo median {crmo.UTS_MPa_FC_median:.0f} → {crmo.UTS_MPa_AC25_median:.0f} MPa), so bar size and route must be "
           "chosen together, and such steels are tempered afterwards.</li>"
           "<li><b>The rest of the route:</b> hardening and tempering give each grade a range of strengths (Q+T UTS within "
-          "about 75 MPa on unseen grades); a stress relief below the tempering parameter changes nothing but the residual stress.</li>"
+          "about 75 MPa on unseen grades); stress relieving follows established rules and is not tested against data.</li>"
           "<li><b>Method:</b> physics carries the extrapolation (new cooling rates, martensite, consistent trends); machine "
           "learning corrects the textbook relations and gives honest intervals; every link is tested on data the models "
           "never saw.</li></ol>"
@@ -345,7 +345,7 @@ def slides_closing(d, N):
           '<p class="tiny">The full list, with DOIs and the 52 papers of the literature compilation, is in the project report.</p>',
           title="Key references", kicker="References")
 
-    d.add('<div class="kicker">Furnace cooling vs air cooling of carbon and low-alloy steels</div>'
+    d.add('<div class="kicker">Annealing, normalising, hardening, tempering and stress relieving of steels</div>'
           '<h1>Thank you</h1>'
           '<p style="font-size:22px;line-height:1.4;color:#52514e;max-width:980px">Composition, cooling route and bar size '
           'in; microstructure and properties out, each with a range, and every step checked against measured data.</p>'

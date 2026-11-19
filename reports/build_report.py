@@ -359,6 +359,15 @@ def tokens_v3(T):
     T["bar_table"] = md_table(["Check", "Bars", "Grades", "UTS RMSE (MPa)", "Bias (MPa)", "In 90 % interval"],
                               [[r.check, int(r.n), int(r.grades), f(r.RMSE), f"{r.bias:+.0f}",
                                 pct(r.coverage90) if pd.notna(r.get("coverage90", np.nan)) else "-"] for _, r in bt.iterrows()])
+    def _row(lab):
+        r = bm[(bm.check == lab) & (bm.target == "UTS_MPa")]
+        return (int(r.n.iloc[0]), float(r.RMSE.iloc[0])) if len(r) else (0, np.nan)
+    na, ra = _row("annealed, grades never seen")
+    n1, r1 = _row("normalised, handbook grades, other bar sizes")
+    n2, r2 = _row("normalised, grades never seen")
+    T["ann_new_n"], T["ann_new_rmse"] = str(na), f(ra)
+    T["bar_indep_n"] = str(n1 + n2)
+    T["bar_indep_rmse"] = f(np.sqrt((n1 * r1 ** 2 + n2 * r2 ** 2) / max(n1 + n2, 1)))
     pr = bm[bm.check.str.startswith("bar-size effect")]
     if len(pr):
         p0 = pr.iloc[0]

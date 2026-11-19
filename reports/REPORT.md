@@ -1,4 +1,4 @@
-# Furnace cooling vs air cooling of carbon and low-alloy steels, and the rest of the heat-treatment route: microstructure and tensile properties predicted with physics-informed machine learning
+# Annealing, normalising, hardening, tempering and stress relieving of carbon and low-alloy steels: microstructure, hardness and tensile properties predicted with physics-informed machine learning
 
 **B.Tech Project (MTP-400A), Department of Metallurgical and Materials Engineering, IIT Roorkee**
 **Authors:** Aviral Singh, Shibasish Banerjee  |  **Supervisor:** Dr. Anish Karmakar
@@ -10,29 +10,41 @@
 
 ## Abstract
 
-We built a model that takes the composition of a carbon or low-alloy steel and tells what kind of steel it is,
-what microstructure forms when it is furnace cooled (full annealing) or cooled in still air as a bar of a given
-size (normalising), and what yield strength, tensile strength, uniform and total elongation, hardness and
-impact transition temperature to expect, each with a 90 % interval. Version 3 adds the rest of the classic
-route: hardening (oil, water or brine quench of a round bar), tempering and stress relieving, with
-precipitation strengthening, embrittlement warnings and a check that refuses thermomechanically rolled
-chemistries. The model follows the metallurgy step by step: empirical thermodynamics, a heat balance for the
-cooling path (lumped for air, radial conduction for a quench), the Kirkaldy-Venugopalan / Li et al.
+We built an open model that takes the composition of a carbon or low-alloy steel and its heat treatment, and
+predicts what kind of steel it is, what microstructure forms and what properties follow, for the five classic
+treatments. What it gives, and how far each part is tested, differs from one treatment to the next, and we say so
+throughout:
+
+* **Annealing (furnace cooling) and normalising (still-air cooling of a bar of a given size):** yield and tensile
+  strength, uniform and total elongation and hardness, each with a 90 % interval, and an impact transition
+  temperature as an estimate. On handbook grades left out of training the tensile strength is within 47 MPa
+  (textbook relations alone: 94).
+* **Hardening (an oil, water or brine quench of a round bar):** the constituents and the as-quenched hardness. The
+  hardness chain is tested on the Jominy end-quench bands of the SAE H-steels (5.9 HRC on grades left out); for
+  quenched bars it is tested only indirectly, through the tempered bars and Grossmann's D_I, against which the model is
+  about 1.56 times too hardenable. No tensile properties are given for untempered martensite, which is too
+  brittle for a meaningful tensile test.
+* **Tempering after hardening:** yield and tensile strength and elongation with 90 % intervals, tested on 324 bars of
+  28 grades at four bar sizes (tensile strength within 75 MPa on grades left out; textbook physics alone:
+  247), with warnings for the embrittlement ranges.
+* **Stress relieving:** a check that the soak stays below Ac1, an upper bound of the residual stress, and a change of
+  properties only if the soak tempers the steel further. This part follows established rules and is **not tested
+  against measurements**, because we found no open data for it.
+
+The question we started with, set by our supervisor, is how furnace cooling and air cooling differ, and it remains
+the core of the study. The model follows the metallurgy step by step: empirical thermodynamics, a heat balance for
+the cooling path (lumped for air, radial conduction for a quench), the Kirkaldy-Venugopalan / Li et al.
 transformation kinetics, structure-property laws, a Hollomon-Jaffe tempering model, and Gaussian-process models
-that learn what the textbook laws miss. We tested every link against measured data that the models never saw:
-dilatometry of 3 steels, 423 points of an open CCT atlas, the Jominy bands of 80 SAE H-steels, 324
-quenched-and-tempered bars of 28 grades at four bar sizes, 241 normalised and annealed bars, 215
-values from 52 open papers, published micrographs and 165 structural members. On unseen handbook grades the
-model predicts the UTS of annealed and normalised steel within 47 MPa (textbook relations alone: 94), and the
-UTS of quenched-and-tempered steel within 75 MPa (textbook physics alone: 247). Making every assumption
-explicit paid off at once. The bar size of the handbook's normalised data, which we had inferred as 50 mm,
-is documented in a second source as 25 mm, and we corrected it. A Markov-chain Monte Carlo posterior of
-the kinetic constants then shows that the transformation model's errors on independent data are structural
-rather than parametric. The answer to our question is clear: for low-carbon steels furnace and air cooling
-give almost the same steel; for medium- and high-carbon steels air cooling gives the same phases with much
-finer pearlite; and for hardenable Cr-Mo and Ni-Cr-Mo steels it gives a different, bainitic steel, so for them
-the bar size matters as much as the route. Hardening and tempering then give each grade a whole range of
-strengths: 853-1768 MPa for a 25 mm 4140 bar tempered at 200-700 °C.
+that learn what the textbook laws miss. Besides the data above, we tested it against dilatometry of 3 steels, 423
+points of an open CCT atlas, 241 normalised and annealed bars, 215 values from 52 open papers, published
+micrographs and 165 structural members. Making every assumption explicit corrected one of them: the bar size of the
+handbook's normalised data, which we had inferred as 50 mm, is documented in a second source as 25 mm. A
+Markov-chain Monte Carlo posterior of the kinetic constants shows that the transformation model's remaining errors
+are structural rather than parametric. The answer to the core question is clear: for low-carbon steels furnace and
+air cooling give almost the same steel; for medium- and high-carbon steels air cooling gives the same phases with
+much finer pearlite; and for hardenable Cr-Mo and Ni-Cr-Mo steels it gives a different, bainitic steel, so for them
+the bar size matters as much as the route. Hardening and tempering then give each grade a range of strengths:
+853-1768 MPa for a 25 mm 4140 bar tempered at 200-700 °C.
 
 ## 1. Introduction
 
@@ -63,6 +75,16 @@ small. Three things came out of it:
 * **The full route.** Hardening, tempering and stress relieving are modelled with the same kinetics
   (Section 7), and every assumption is listed with a sensitivity analysis (Section 8) and a proper posterior of
   the kinetic constants (Section 9).
+
+**What the model predicts for each treatment, and the evidence behind it**
+
+| Treatment | Predicted | Tested against (data the models never saw) | Not covered |
+|---|---|---|---|
+| Annealing | constituents, pearlite spacing, grain size; YS, UTS, uniform and total elongation, HB with 90 % intervals; ITT as an estimate | handbook grades left out (UTS 47 MPa); 8 annealed bars of grades never seen (UTS 20 MPa); literature | the furnace rate of the handbook data is assumed |
+| Normalising | the same, for any bar size | handbook grades left out; 114 normalised bars at other sizes or of new grades (UTS 68 MPa); literature; structural members | the bar-size effect is overstated (Section 8.5) |
+| Hardening | constituents and as-quenched hardness at the specimen position | Jominy bands of the H-steels (5.9 HRC); quenched bars only indirectly (tempered bars; D_I, model 1.56× too hardenable) | tensile properties of untempered martensite |
+| Tempering | YS, UTS and elongation with 90 % intervals; hardness (derived); embrittlement flags | 324 quenched-and-tempered bars of 28 grades, left out by grade (UTS 75 MPa) | Charpy energy |
+| Stress relieving | subcritical check; residual-stress upper bound; re-tempering by Hollomon-Jaffe additivity | **not tested**: no open data found | creep relaxation during the soak |
 
 ### 1.3 The questions, and what metallurgy expects
 
@@ -687,6 +709,9 @@ the yield strength at temperature, so plastic flow brings it down to k_y(T) × Y
 600 °C. A tempered steel softens only if the soak tempers it further. By Hollomon-Jaffe additivity, a 4140 bar
 tempered at 600 °C for 1 h (998 MPa) keeps 991 MPa after a 575 °C stress relief but falls to 916 MPa after
 one at 650 °C. That is the reason for the shop rule of relieving at least 25-30 °C below the tempering temperature (H8).
+Everything in this section follows established rules (EN 1993-1-2, Hollomon-Jaffe additivity) and is not tested
+against measured stress-relief data: we found no open dataset of residual stress or hardness before and after a
+stress relief with the full treatment recorded. H8 is therefore an expectation built into the model, not a result.
 
 ### 7.6 Precipitation strengthening, toughness and thermomechanically rolled steels
 
@@ -897,6 +922,8 @@ side by side, which is Table 4 for any steel. The interactive tool has a tab for
 * **The quench is Grossmann's:** one constant heat-transfer coefficient per bath, no boiling stages, no latent heat of
   transformation; long bars only (no plates, no end effects). The radial martensite profile of a moderately agitated
   oil quench therefore carries the bainite kinetics' uncertainty.
+* **Not tested against measurements:** stress relieving (no open data; it follows established rules), and the
+  as-quenched hardness of bars (tested only through the Jominy bands, the tempered bars and D_I).
 * **Estimated, not trained:** precipitation strengthening (±50 %), uniform elongation, ferrite grain size (factor of 2)
   and the impact transition temperature; as-quenched tensile properties are not given.
 * **Out of scope, and said so:** Charpy values of quenched-and-tempered steel, as-delivered TMCP products, boron's

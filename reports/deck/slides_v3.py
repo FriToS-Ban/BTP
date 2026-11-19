@@ -130,14 +130,14 @@ def slides_v3(d, N):
             '<div class="col-2 small"><ul>'
             "<li><b>Stress relief:</b> residual stress ≤ k<sub>y</sub>(T)·YS (EN 1993-1-2). A Q+T 4140 (600 °C) keeps "
             f"{sa.loc[575, 'UTS_after_MPa']:.0f} MPa after a 575 °C relief but falls to {sa.loc[650, 'UTS_after_MPa']:.0f} MPa after 650 °C: "
-            "relieve below the tempering temperature (H8).</li>"
+            "relieve below the tempering temperature (H8). Built from established rules; we found no open data to test it.</li>"
             "<li><b>Precipitation:</b> dissolved V and Nb (solubility products) + Ashby-Orowan; finer after air cooling "
             "than after furnace cooling. An estimate (±50 %), only for microalloyed steels.</li>"
             "<li><b>Toughness:</b> ITT for ferrite-pearlite; for Q+T, Charpy is out of scope and the TME and "
             "temper-embrittlement windows are flagged.</li>"
             "<li><b>TMCP / HSLA, boron:</b> recognised from the chemistry; the tool predicts them only after "
             "re-austenitising.</li></ul></div></div>")
-    d.add(body, title="Stress relieving, precipitation, toughness and rolled steels: modelled, estimated or declared",
+    d.add(body, title="Stress relieving, precipitation, toughness and rolled steels: rules, estimates or declared limits",
           kicker="Scope")
 
     # ---- assumptions
