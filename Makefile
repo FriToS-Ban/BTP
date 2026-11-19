@@ -9,7 +9,7 @@ setup:            ## create the virtual environment and install requirements
 fetch:            ## download every open source and re-parse data/raw
 	$(PY) pipeline/s00_fetch_data.py
 
-pipeline:         ## stages 1-8: datasets, categories, microstructure, models, analysis, validation, design, hardenability
+pipeline:         ## stages 1-11: datasets ... hardenability, hardening + tempering, assumptions, kinetic uncertainty
 	$(PY) pipeline/run_all.py
 
 notebooks:        ## rebuild and execute the presentation notebooks from results/

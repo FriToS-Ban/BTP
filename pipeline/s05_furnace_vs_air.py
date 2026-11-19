@@ -142,7 +142,7 @@ def composition_noise_floor(sp, catalog, n_heats=60, seed=config.RANDOM_SEED):
     grades = catalog[catalog.grade.isin(hb.catalog_grade.dropna().unique())]
     heats = sample_heats(grades, n_heats, np.random.default_rng(seed))
     rows = []
-    for route, D in (("FC", 25.0), ("AC", 50.0)):
+    for route, D in (("FC", 25.0), ("AC", config.HANDBOOK_AC_SECTION_MM)):
         X = heats[["grade"] + config.ELEMENTS].copy()
         X["route"], X["section_mm"] = route, D
         out = sp.predict(X.drop(columns=["grade"]))

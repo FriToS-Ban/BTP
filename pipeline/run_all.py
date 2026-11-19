@@ -1,6 +1,6 @@
 """Run the whole pipeline in order and report timings.
 
-    python pipeline/run_all.py              # stages 1-8 (uses data/raw as committed)
+    python pipeline/run_all.py              # stages 1-11 (uses data/raw as committed)
     python pipeline/run_all.py --fetch      # re-download and re-parse the sources first
     python pipeline/run_all.py --from 4     # resume from stage 4
 """
@@ -25,6 +25,9 @@ STAGES = [
     (6, "s06_external_validation", "external validation"),
     (7, "s07_design_and_active_learning", "inverse design, active learning, lab plan"),
     (8, "s08_hardenability", "hardenability: ideal critical diameter and Jominy H-bands"),
+    (9, "s09_hardening_tempering", "hardening, tempering, stress relieving: the full heat-treatment route"),
+    (10, "s10_assumptions_sensitivity", "assumptions register and sensitivity analysis"),
+    (11, "s11_kinetic_uncertainty", "kinetic posterior (MCMC), uncertainty propagation, independent coverage"),
 ]
 
 

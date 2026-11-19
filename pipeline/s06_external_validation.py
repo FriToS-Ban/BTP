@@ -112,6 +112,86 @@ def secondary(sp):
     return X, pd.DataFrame(res)
 
 
+def bar_sizes(sp):
+    """Normalised bars of 13-100 mm and annealed bars (Birbilis et al. 2025).
+
+    Rows that repeat the training data (the 25 mm normalised and the annealed
+    rows of handbook grades) are kept apart from the independent ones: other
+    bar sizes of handbook grades (new cooling rates) and grades the models
+    never saw. The bar-size effect (13 mm minus 100 mm) is compared as a
+    paired difference, which removes each grade's offset."""
+    nb = pd.read_csv(config.PROCESSED_DIR / "normalized_bars.csv")
+    hb = pd.read_csv(config.PROCESSED_DIR / "properties_handbook.csv")
+    seen = set(hb.grade.str.replace("AISI ", "", regex=False))
+    X = nb[((nb.route == "FC") | nb.section_mm.notna()) & (nb.quality_flag.fillna("") == "")].copy()
+    X["section_mm"] = X.section_mm.where(X.route == "AC", 25.0)
+    X["fc_rate"] = config.HANDBOOK_FC_RATE
+    out = sp.predict(X[config.ELEMENTS + ["route", "treat_T_C", "section_mm", "fc_rate"]].reset_index(drop=True))
+    X = X.reset_index(drop=True)
+    for t in ("UTS_MPa", "YS_MPa", "El_pct"):
+        X[f"{t}_pred"] = out[f"{t}_pred"].to_numpy()
+        X[f"{t}_lo90"] = out[f"{t}_lo90"].to_numpy()
+        X[f"{t}_hi90"] = out[f"{t}_hi90"].to_numpy()
+    X["in_domain"] = out.in_domain.to_numpy()
+    X["seen_grade"] = X.grade.isin(seen)
+    X["repeats_training"] = X.seen_grade & ((X.route == "FC") | (X.section_mm.round() == 25))
+    rows = []
+    groups = {"repeats training rows": X.repeats_training,
+              "normalised, handbook grades, other bar sizes": (X.route == "AC") & X.seen_grade & ~X.repeats_training,
+              "normalised, grades never seen": (X.route == "AC") & ~X.seen_grade,
+              "annealed, grades never seen": (X.route == "FC") & ~X.seen_grade}
+    for lab, msk in groups.items():
+        for t in ("UTS_MPa", "YS_MPa", "El_pct"):
+            s_ = X[msk & X[f"{t}"].notna()]
+            if len(s_) < 3:
+                continue
+            e = s_[f"{t}_pred"] - s_[t]
+            cover = float(np.mean((s_[t] >= s_[f"{t}_lo90"]) & (s_[t] <= s_[f"{t}_hi90"])))
+            rows.append({"check": lab, "target": t, "n": len(s_), "grades": s_.grade.nunique(),
+                         "RMSE": float(np.sqrt(np.mean(e ** 2))), "bias": float(np.mean(e)), "coverage90": cover})
+    for D in (13, 25, 50, 100):
+        s_ = X[(X.route == "AC") & (X.section_mm.round() == D) & ~X.repeats_training]
+        if len(s_) >= 3:
+            e = s_.UTS_MPa_pred - s_.UTS_MPa
+            rows.append({"check": f"normalised {D} mm bars (independent)", "target": "UTS_MPa", "n": len(s_),
+                         "grades": s_.grade.nunique(), "RMSE": float(np.sqrt(np.mean(e ** 2))),
+                         "bias": float(np.mean(e)), "coverage90": float(np.mean((s_.UTS_MPa >= s_.UTS_MPa_lo90)
+                                                                                 & (s_.UTS_MPa <= s_.UTS_MPa_hi90)))})
+    ac = X[X.route == "AC"].pivot_table(index="grade", columns=X.section_mm.round(), values=["UTS_MPa", "UTS_MPa_pred"])
+    pairs = pd.DataFrame()
+    if ("UTS_MPa", 13.0) in ac.columns and ("UTS_MPa", 100.0) in ac.columns:
+        pairs = pd.DataFrame({"measured_13_minus_100": ac[("UTS_MPa", 13.0)] - ac[("UTS_MPa", 100.0)],
+                              "predicted_13_minus_100": ac[("UTS_MPa_pred", 13.0)] - ac[("UTS_MPa_pred", 100.0)]}).dropna()
+        e = pairs.predicted_13_minus_100 - pairs.measured_13_minus_100
+        rows.append({"check": "bar-size effect, UTS(13 mm) - UTS(100 mm), paired", "target": "UTS_MPa",
+                     "n": len(pairs), "grades": len(pairs), "RMSE": float(np.sqrt(np.mean(e ** 2))),
+                     "bias": float(np.mean(e)),
+                     "sign_agreement": float(np.mean(np.sign(pairs.predicted_13_minus_100)
+                                                     == np.sign(pairs.measured_13_minus_100))),
+                     "mean_measured": float(pairs.measured_13_minus_100.mean()),
+                     "mean_predicted": float(pairs.predicted_13_minus_100.mean())})
+    return X, pd.DataFrame(rows), pairs.reset_index()
+
+
+def fig_bar_sizes(X):
+    grades = [g for g in ("1020", "1045", "1095", "4140", "4340", "8620") if g in set(X.grade)]
+    fig, axes = plt.subplots(1, len(grades), figsize=(2.6 * len(grades), 3.6), sharey=False)
+    for ax, g in zip(np.atleast_1d(axes), grades):
+        s = X[(X.grade == g) & (X.route == "AC")].sort_values("section_mm")
+        ax.plot(s.section_mm, s.UTS_MPa_pred, "-", color=viz.ORANGE, lw=1.6, label="predicted")
+        ax.fill_between(s.section_mm, s.UTS_MPa_lo90, s.UTS_MPa_hi90, color=viz.ORANGE, alpha=0.15, lw=0)
+        ax.plot(s.section_mm, s.UTS_MPa, "o", color=viz.INK, ms=4, label="measured")
+        a = X[(X.grade == g) & (X.route == "FC")]
+        if len(a):
+            ax.axhline(a.UTS_MPa.iloc[0], color=viz.BLUE, lw=1, ls="--", label="annealed (measured)")
+        ax.set_xscale("log"); ax.set_xticks([13, 25, 50, 100]); ax.set_xticklabels(["13", "25", "50", "100"])
+        ax.xaxis.set_minor_formatter(viz.matplotlib.ticker.NullFormatter())
+        ax.set_title(f"AISI {g}", loc="left"); ax.set_xlabel("bar diameter (mm)")
+    np.atleast_1d(axes)[0].set_ylabel("UTS of normalised bars (MPa)")
+    np.atleast_1d(axes)[0].legend(fontsize=7, frameon=False)
+    return viz.savefig(fig, "fig42_normalising_bar_size")
+
+
 def en_normalised(sp):
     z = pd.read_excel(config.RAW_DIR / "zenodo17704410_Carbon_stainless_grades.xlsx")
     z = z[(z.Type == "Carbon") & (z.Standard.isin(["EN", "ASTM", "GB"])) &
@@ -487,6 +567,12 @@ def main():
     sec.to_csv(config.RESULTS_DIR / "s06_secondary_predictions.csv", index=False)
     en, en_res = en_normalised(sp)
     en.to_csv(config.RESULTS_DIR / "s06_en_normalised_predictions.csv", index=False)
+    bars, bar_res, bar_pairs = bar_sizes(sp)
+    bars.to_csv(config.RESULTS_DIR / "s06_bar_sizes_predictions.csv", index=False)
+    bar_res.to_csv(config.RESULTS_DIR / "s06_bar_sizes_metrics.csv", index=False)
+    bar_pairs.to_csv(config.RESULTS_DIR / "s06_bar_size_effect_pairs.csv", index=False)
+    print(bar_res.round(2).to_string(index=False))
+    fig_bar_sizes(bars)
     other = pd.concat([sec_res, en_res], ignore_index=True)
     other.to_csv(config.RESULTS_DIR / "s06_other_checks.csv", index=False)
     print(other.round(3).to_string(index=False))

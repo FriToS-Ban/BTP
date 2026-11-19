@@ -138,7 +138,7 @@ def fig_calibration(cal):
     axes[0].plot(n.value, n.HB_RMSE, "-o", color=viz.ROUTE_COLORS["AC"], mec=viz.SURFACE)
     axes[0].axvline(config.HANDBOOK_AC_SECTION_MM, color=viz.INK2, lw=1)
     axes[0].text(config.HANDBOOK_AC_SECTION_MM * 1.05, n.HB_RMSE.max() * 0.95,
-                 f"adopted: {config.HANDBOOK_AC_SECTION_MM:.0f} mm (~0.5 K/s)", color=viz.INK2, fontsize=9)
+                 f"documented: {config.HANDBOOK_AC_SECTION_MM:.0f} mm (1 in.) rounds", color=viz.INK2, fontsize=9)
     axes[0].set_xscale("log")
     axes[0].set_xlabel("Equivalent bar diameter in still air (mm)")
     axes[0].set_ylabel("Physics-only hardness RMSE (HB)")
@@ -146,7 +146,7 @@ def fig_calibration(cal):
     a = cal[cal.condition == "annealed"]
     axes[1].plot(a.value, a.HB_RMSE, "-o", color=viz.ROUTE_COLORS["FC"], mec=viz.SURFACE)
     axes[1].axvline(config.HANDBOOK_FC_RATE, color=viz.INK2, lw=1)
-    axes[1].text(config.HANDBOOK_FC_RATE * 1.08, a.HB_RMSE.max() * 0.995, "adopted: 0.005 K/s (18 K/h)",
+    axes[1].text(config.HANDBOOK_FC_RATE * 1.08, a.HB_RMSE.max() * 0.995, "assumed: 0.005 K/s (18 K/h)",
                  color=viz.INK2, fontsize=9)
     axes[1].set_xscale("log")
     axes[1].set_xlabel("Furnace cooling rate at 700 °C (K/s)")
