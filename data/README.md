@@ -18,9 +18,19 @@ with their source and licence, and are re-created by `python pipeline/s00_fetch_
 | `steelbench` | Zenodo 18530558 (SteelBench v1.0): heat-level chemistry with steel-family labels | 1358 | mixed | CC BY 4.0 | external test of the category classifier |
 | `collins2023` | Zenodo 7770264 (Collins et al. 2023): **measured** transformation-start temperatures (dilatometry) and microhardness (16 indents per rate) at 9 cooling rates, chemistry and prior-austenite grain size of EN3B, EN8 and SA-540 B24; also the authors' own Li-model output (start temperatures and the constituent fractions in `collins2023_fractions.csv`, which are **modelled, not measured**, and are used only to check that our implementation reproduces theirs) | 3 steels x 9 rates | measured | CC BY 4.0 | validation of the transformation model and of cooling-rate extrapolation. Only 15 small members of the 231 MB archive are read, by HTTP range requests. |
 | `literature` | `raw/literature_compilation.csv`: 215 rows from 52 open-access papers (pearlite fraction, ferrite grain size, pearlite spacing, YS, UTS, uniform and total elongation, hardness, impact energy of annealed / normalized / other ferrite-pearlite and low-alloy steels). 93 rows (S01-S26) from the first search, 122 (S27-S52) from a second search for same-steel furnace-vs-air comparisons; every number of the second search was checked by script against the saved full text, and its verbatim excerpt is in `raw/literature_evidence.csv`. 51 rows carry `quality_flag = suspect: <reason>` and are excluded from every metric. See `raw/literature_sources.md`. | 215 | measured | per paper (mostly CC BY) | microstructure validation and calibration, uniform-elongation ratio, external property checks, paired furnace-vs-air changes |
+| `birbilis2025` (v3) | Mendeley Data jmwb9ddd43 (Birbilis, Ghorbani & Zhao 2025): composition, a written **processing condition** (quench medium, austenitising and tempering temperature, bar size 13/25/50/100 mm) and YS, UTS, ductility of 3234 steels. Parsed by `src/steelml/data/birbilis.py`; after removing out-of-scope, carburised, cold-drawn and repeated (H / non-H) rows: 324 quenched-and-tempered bars (28 grades) and 241 normalised / annealed bars (39 grades). Its normalised 25 mm rows equal the ASM handbook values, which documents the handbook bar size. | 3234 (565 used) | typical (handbook-type, stated bar size) | CC BY 4.0 | hardening + tempering models (stage 9), bar-size tests (stages 6, 10) |
 | `uhcsdb` (optional, not used) | NIST *Ultrahigh Carbon Steel Micrographs* (961 SEM images with anneal/cooling metadata). Located and documented as a future-work dataset; its steels (1.3-1.5 % C) lie outside the ferrite-pearlite scope. | 961 | measured | CC BY 3.0 US | - |
 
 `raw/source_manifest.csv` records the URL, SHA-256, licence and citation of every file.
+
+**Sources checked and not used for training (v3).** SteelBench's NIMS rows (360) give tensile strength without
+any heat treatment, the flaw of this project's first version; its EMK rows are specification minima whose
+compositions look like upper limits. The NIMS fatigue dataset (Agrawal et al. 2014) and the MAP datasets have
+no licence we could confirm for redistribution, and eFunda's quenched-and-tempered tables are copyrighted.
+
+**Why the data are a few MB.** Tabular data with a measured property *and* a known heat treatment are small
+everywhere; steel datasets of a gigabyte are image collections (e.g. the NIST micrographs above, 270 MB) or
+tables without the processing. The project counts measured records with their treatment, not megabytes.
 
 ## Typical values versus minimum values
 

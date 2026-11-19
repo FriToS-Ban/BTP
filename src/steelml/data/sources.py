@@ -139,6 +139,21 @@ SOURCES = [
         extra={"zip_members": True},
     ),
     Source(
+        key="birbilis2025",
+        url=("https://data.mendeley.com/public-files/datasets/jmwb9ddd43/files/"
+             "cc944ab8-d3c8-448c-ac1d-172e8cc7e11d/file_downloaded"),
+        filename="birbilis2025_steel_database.xlsx",
+        licence="CC BY 4.0",
+        citation=("Birbilis, N., Ghorbani, M., Zhao, S. (2025) A database of mechanical properties of steels, "
+                  "Mendeley Data, V1, doi:10.17632/jmwb9ddd43.1."),
+        kind=("3234 steels with composition, a written processing condition (quench medium, austenitising "
+              "and tempering temperature, bar size) and yield strength, tensile strength and ductility; "
+              "used for the quenched-and-tempered and the bar-size data (stages 1, 6, 9, 10)"),
+        value_type="typical (handbook-type data, measured on the stated bar sizes)",
+        notes=("Compiled from handbook-type sources; the CC BY licence covers the compilation. Repeated "
+               "H/non-H rows with identical values are removed (src/steelml/data/birbilis.py)."),
+    ),
+    Source(
         key="uhcsdb",
         url="https://materialsdata.nist.gov/pid/rest/local/cdcs/450Z3P0I08L7NGQ4",
         filename="uhcs_microstructures.sqlite",

@@ -76,7 +76,7 @@ def main(fetch_all=False):
     # CC BY 4.0 files are small and are kept verbatim for provenance
     for name in ("zenodo17704410_Carbon_stainless_grades.xlsx",
                  "zenodo19000367_Cleveland_reused_members.xlsx",
-                 "steelbench_core_open.csv"):
+                 "steelbench_core_open.csv", "birbilis2025_steel_database.xlsx"):
         shutil.copy2(ext / name, raw / name)
     cl = parsers.load_cleveland(ext / "zenodo19000367_Cleveland_reused_members.xlsx")
     cl.to_csv(raw / "cleveland_members_parsed.csv", index=False)

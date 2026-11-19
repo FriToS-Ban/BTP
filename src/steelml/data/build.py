@@ -10,6 +10,9 @@ Outputs (data/processed/):
   structural_external.csv     measured heat chemistry + tensile data of hot-rolled
                               structural members (Kingsley et al. 2026)
   heats_steelbench.csv        real heat analyses with family labels (classifier test)
+  qt_bars.csv                 quenched-and-tempered bars (Birbilis et al. 2025): quench
+                              medium, austenitising and tempering temperature, bar size
+  normalized_bars.csv         normalised bars of 13-100 mm and annealed bars, same source
 """
 
 from __future__ import annotations
@@ -140,6 +143,68 @@ def steelbench_heats():
     return sb[["heat_id", "grade_id", "source", "data_tier", "steel_family", "family_coarse"] + EL]
 
 
+def _catalog_key_from_base(base):
+    if re.fullmatch(r"10\d\d|11\d\d|12\d\d|15\d\d|3140|9255", str(base)):
+        return f"AISI {base}"
+    return f"AISI {base}H"
+
+
+def _birbilis_compositions(rows, catalog):
+    """Nominal compositions for Birbilis rows: the grade catalogue's nominal
+    composition (with its residual levels, as for the handbook data) when the
+    grade is in it; otherwise the database's own composition with unlisted
+    residual elements set to the typical levels of config.RESIDUAL_TYPICAL."""
+    cat = catalog.set_index("grade")
+    out = rows.copy()
+    out["catalog_grade"] = out.base_grade.map(_catalog_key_from_base)
+    in_cat = out.catalog_grade.isin(cat.index)
+    for el in EL:
+        own = out[el].astype(float) if el in out.columns else pd.Series(0.0, index=out.index)
+        if el in config.RESIDUAL_TYPICAL:
+            own = own.where(own > 0, config.RESIDUAL_TYPICAL[el])
+        nom = out.catalog_grade.map(cat[f"{el}_nom"]) if f"{el}_nom" in cat.columns else own
+        out[el] = np.where(in_cat & nom.notna(), nom, own)
+    out["composition_source"] = np.where(in_cat, "grade catalogue", "database (+typical residuals)")
+    return out
+
+
+def heat_treatment_tables(catalog):
+    """Quenched-and-tempered, normalised and annealed bars of Birbilis et al.
+    (2025), deduplicated (the database repeats the H and non-H versions of a
+    grade with identical values)."""
+    from . import birbilis
+    p = birbilis.parse(birbilis.load_raw())
+    u = p[p.in_scope & p.dup_of.isna()].copy()
+    u = u[u.UTS_MPa.notna() & u.YS_MPa.notna() & u.El_pct.notna() & (u.YS_MPa <= u.UTS_MPa * 1.001)]
+    u["grade"] = u.base_grade
+    u["sample_id"] = "BB" + u.entry.astype(int).astype(str)
+    qt = u[(u.route == "QT") & u.quench_medium.isin(["oil", "water"]) & u.temper_T_C.notna()
+           & u.section_mm.notna() & ~u.processing.str.contains("Reheated", case=False)
+           & ~u.double_quench.astype(bool)].copy()
+    qt["route"] = "QT"
+    qt["treat_T_C_given"] = qt.austenitize_T_C.notna()
+    qt["treat_T_C"] = qt.austenitize_T_C
+    qt["temper_time_h"] = qt.temper_time_h
+    qt = _birbilis_compositions(qt, catalog)
+    no = u[u.route.isin(["NO", "AN"])].copy()
+    no["route"] = np.where(no.route == "NO", "AC", "FC")
+    no["treat_T_C_given"] = no.austenitize_T_C.notna()
+    no["treat_T_C"] = no.austenitize_T_C
+    no = _birbilis_compositions(no, catalog)
+    # physically implausible rows are kept, flagged and left out of every metric
+    # (as the literature compilation does): an "annealed" 0.5 % C steel at
+    # 1255 MPa with a yield ratio of 0.86 is a quenched-and-tempered value under
+    # the wrong label; annealed 4130's own yield ratio of 0.82 is genuine.
+    yr = no.YS_MPa / no.UTS_MPa
+    bad = ((no.route == "FC") & ((no.UTS_MPa > 1100) | (yr > 0.85))) | ((no.route == "AC") & (yr > 0.85))
+    no["quality_flag"] = np.where(bad, "implausible for the stated treatment", "")
+    qt["quality_flag"] = ""
+    keep = ["sample_id", "entry", "grade", "family", "route", "processing", "quench_medium", "treat_T_C",
+            "treat_T_C_given", "temper_T_C", "temper_time_h", "section_mm", "catalog_grade",
+            "composition_source", "quality_flag"] + EL + ["UTS_MPa", "YS_MPa", "El_pct"]
+    return qt[keep].reset_index(drop=True), no[[k for k in keep if k in no.columns]].reset_index(drop=True)
+
+
 def build_all():
     config.ensure_dirs()
     catalog = catmod.build_catalog()
@@ -152,4 +217,8 @@ def build_all():
     ext.to_csv(config.PROCESSED_DIR / "structural_external.csv", index=False)
     sb = steelbench_heats()
     sb.to_csv(config.PROCESSED_DIR / "heats_steelbench.csv", index=False)
-    return {"catalog": catalog, "primary": prim, "secondary": sec, "external": ext, "steelbench": sb}
+    qt, nb = heat_treatment_tables(catalog)
+    qt.to_csv(config.PROCESSED_DIR / "qt_bars.csv", index=False)
+    nb.to_csv(config.PROCESSED_DIR / "normalized_bars.csv", index=False)
+    return {"catalog": catalog, "primary": prim, "secondary": sec, "external": ext, "steelbench": sb,
+            "qt": qt, "normalized_bars": nb}
