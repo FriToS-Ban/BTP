@@ -1,0 +1,7 @@
+dataset,rows,steels_or_grades,value_type,source,used_for
+grade_catalog,547,547,composition ranges,"Summit Steel (SAE J403/J1268), Wikipedia, Zenodo 17704410",classification
+properties_handbook,80,33,typical values,ASM Handbook / Bethlehem Steel (via Engineers Edge),property models (training)
+properties_secondary,57,35,typical + specification minima,Zenodo 17704410 (MatWeb-derived),inter-source check
+structural_external,165,165,measured,Zenodo 19000367 (Kingsley et al. 2026),external validation
+heats_steelbench,1358,560,measured heat chemistry,Zenodo 18530558 (SteelBench),classifier external test
+collins2023,27,3,measured,Zenodo 7770264 (Collins et al. 2023),transformation + cooling-rate validation

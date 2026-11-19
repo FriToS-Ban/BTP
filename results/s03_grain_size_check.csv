@@ -1,0 +1,3 @@
+relation,n,MAE_um,bias_um,mean_error_factor,at_3um_floor
+"Hodgson-Gibbs, both branches",20,16.90046426195884,-11.311537115841743,2.6722929043262327,6
+"Hodgson-Gibbs low-Ceq branch, Ceq held at 0.35 (used)",20,15.230624421809008,-6.16253879773318,2.062509482271228,0

@@ -1,0 +1,8 @@
+test,level,n,accuracy,flagged_unknown,detail
+SteelBench emk_spec_verified,family (carbon / low-alloy / stainless),751,0.9161118508655126,0.3821571238348868,
+SteelBench kaggle_measured,family (carbon / low-alloy / stainless),247,0.97165991902834,0.0,
+SteelBench nims_measured,family (carbon / low-alloy / stainless),360,0.975,0.0,
+SteelBench all,family (carbon / low-alloy / stainless),1358,0.9418262150220913,0.211340206185567,
+Structural S275/S355 members (measured),category,165,0.7515151515151515,0.0,
+Collins et al. EN3B / EN8 / SA-540 (measured),category,3,1.0,0.0,EN3B->low_carbon; EN8->medium_carbon; SA540->ni_cr_mo
+Legacy dataset (18Ni-Co-Mo maraging type) - open-set,should be flagged unknown,312,1.0,1.0,

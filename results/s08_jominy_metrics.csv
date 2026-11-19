@@ -1,0 +1,25 @@
+distances,n,RMSE_HRC,bias_HRC,inside_band,kinetics,grades
+all distances,1040,10.125336708718637,6.971344764670264,0.5423076923076923,published Li et al. constants,non-boron grades
+J1-J4 (quenched end),256,4.128507089089457,0.5739656751608708,0.8515625,published Li et al. constants,non-boron grades
+J5-J16,549,9.834724881313567,7.655838492221025,0.5555555555555556,published Li et al. constants,non-boron grades
+J18-J32 (air-cooling range),235,14.463402894969427,12.341310681644895,0.17446808510638298,published Li et al. constants,non-boron grades
+all distances,311,11.203223706943053,4.032384181056715,0.5659163987138264,published Li et al. constants,boron grades
+J1-J4 (quenched end),59,7.184861609007934,-3.4899005990963143,0.6610169491525424,published Li et al. constants,boron grades
+J5-J16,166,9.915129265826378,3.1818497274745976,0.608433734939759,published Li et al. constants,boron grades
+J18-J32 (air-cooling range),86,15.123201047166006,10.834750708076024,0.4186046511627907,published Li et al. constants,boron grades
+all distances,1040,5.627576162230805,0.5048084199994868,0.801923076923077,calibrated on the H-bands,non-boron grades
+J1-J4 (quenched end),256,5.368387853241813,-2.895170813089616,0.72265625,calibrated on the H-bands,non-boron grades
+J5-J16,549,4.8407102562099285,0.9496744018052858,0.843351548269581,calibrated on the H-bands,non-boron grades
+J18-J32 (air-cooling range),235,7.34967193648485,3.169332929188537,0.7914893617021277,calibrated on the H-bands,non-boron grades
+all distances,311,10.207283594609336,-4.671434445562639,0.5273311897106109,calibrated on the H-bands,boron grades
+J1-J4 (quenched end),59,10.4719745423253,-7.930690452383025,0.3898305084745763,calibrated on the H-bands,boron grades
+J5-J16,166,10.312410341925162,-6.627709999248472,0.536144578313253,calibrated on the H-bands,boron grades
+J18-J32 (air-cooling range),86,9.811709761591313,1.3406335348356282,0.6046511627906976,calibrated on the H-bands,boron grades
+all distances,1040,5.600085855871915,0.6222856015269461,0.7923076923076923,calibrated on the H-bands + dilatometry starts,non-boron grades
+J1-J4 (quenched end),256,5.577462048633956,-3.072021185823966,0.703125,calibrated on the H-bands + dilatometry starts,non-boron grades
+J5-J16,549,4.956048977967599,1.1066571071016502,0.8324225865209471,calibrated on the H-bands + dilatometry starts,non-boron grades
+J18-J32 (air-cooling range),235,6.893401545948152,3.515147648341079,0.7957446808510639,calibrated on the H-bands + dilatometry starts,non-boron grades
+all distances,311,10.683487104590743,-4.638585475105802,0.5241157556270096,calibrated on the H-bands + dilatometry starts,boron grades
+J1-J4 (quenched end),59,11.65311135551104,-8.895376001043207,0.3559322033898305,calibrated on the H-bands + dilatometry starts,boron grades
+J5-J16,166,10.662759156096627,-6.6643452966852825,0.536144578313253,calibrated on the H-bands + dilatometry starts,boron grades
+J18-J32 (air-cooling range),86,10.006622097039752,2.1919583785279277,0.6162790697674418,calibrated on the H-bands + dilatometry starts,boron grades

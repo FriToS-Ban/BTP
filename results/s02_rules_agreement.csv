@@ -1,0 +1,4 @@
+subset,n,share,family_accuracy_ML
+all SteelBench heats,1358,1.0,0.9418262150220913
+ML and AISI rules agree on the category,1185,0.8726067746686303,0.9713080168776371
+ML and AISI rules disagree,173,0.12739322533136965,0.7398843930635838

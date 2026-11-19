@@ -1,0 +1,43 @@
+test,level,n,accuracy,flagged_unknown,detail,model
+SteelBench emk_spec_verified,family (carbon / low-alloy / stainless),751,0.8934753661784287,0.3821571238348868,,logistic
+SteelBench kaggle_measured,family (carbon / low-alloy / stainless),247,0.97165991902834,0.0,,logistic
+SteelBench nims_measured,family (carbon / low-alloy / stainless),360,1.0,0.0,,logistic
+SteelBench all,family (carbon / low-alloy / stainless),1358,0.9359351988217968,0.211340206185567,,logistic
+Structural S275/S355 members (measured),category,165,0.7151515151515152,0.0,,logistic
+Collins et al. EN3B / EN8 / SA-540 (measured),category,3,0.3333333333333333,0.0,EN3B->chromium; EN8->chromium; SA540->ni_cr_mo,logistic
+Legacy dataset (18Ni-Co-Mo maraging type) - open-set,should be flagged unknown,312,1.0,1.0,,logistic
+SteelBench emk_spec_verified,family (carbon / low-alloy / stainless),751,0.6231691078561917,0.3821571238348868,,knn
+SteelBench kaggle_measured,family (carbon / low-alloy / stainless),247,0.97165991902834,0.0,,knn
+SteelBench nims_measured,family (carbon / low-alloy / stainless),360,0.8,0.0,,knn
+SteelBench all,family (carbon / low-alloy / stainless),1358,0.7334315169366715,0.211340206185567,,knn
+Structural S275/S355 members (measured),category,165,0.703030303030303,0.0,,knn
+Collins et al. EN3B / EN8 / SA-540 (measured),category,3,0.3333333333333333,0.0,EN3B->chromium; EN8->chromium; SA540->ni_cr_mo,knn
+Legacy dataset (18Ni-Co-Mo maraging type) - open-set,should be flagged unknown,312,1.0,1.0,,knn
+SteelBench emk_spec_verified,family (carbon / low-alloy / stainless),751,0.729693741677763,0.3821571238348868,,mlp
+SteelBench kaggle_measured,family (carbon / low-alloy / stainless),247,0.97165991902834,0.0,,mlp
+SteelBench nims_measured,family (carbon / low-alloy / stainless),360,0.9416666666666667,0.0,,mlp
+SteelBench all,family (carbon / low-alloy / stainless),1358,0.8298969072164949,0.211340206185567,,mlp
+Structural S275/S355 members (measured),category,165,0.7515151515151515,0.0,,mlp
+Collins et al. EN3B / EN8 / SA-540 (measured),category,3,0.3333333333333333,0.0,EN3B->chromium; EN8->chromium; SA540->ni_cr_mo,mlp
+Legacy dataset (18Ni-Co-Mo maraging type) - open-set,should be flagged unknown,312,1.0,1.0,,mlp
+SteelBench emk_spec_verified,family (carbon / low-alloy / stainless),751,0.7922769640479361,0.3821571238348868,,random_forest
+SteelBench kaggle_measured,family (carbon / low-alloy / stainless),247,0.97165991902834,0.0,,random_forest
+SteelBench nims_measured,family (carbon / low-alloy / stainless),360,1.0,0.0,,random_forest
+SteelBench all,family (carbon / low-alloy / stainless),1358,0.8799705449189985,0.211340206185567,,random_forest
+Structural S275/S355 members (measured),category,165,0.7696969696969697,0.0,,random_forest
+Collins et al. EN3B / EN8 / SA-540 (measured),category,3,0.6666666666666666,0.0,EN3B->low_carbon; EN8->chromium; SA540->ni_cr_mo,random_forest
+Legacy dataset (18Ni-Co-Mo maraging type) - open-set,should be flagged unknown,312,1.0,1.0,,random_forest
+SteelBench emk_spec_verified,family (carbon / low-alloy / stainless),751,0.9161118508655126,0.3821571238348868,,xgboost
+SteelBench kaggle_measured,family (carbon / low-alloy / stainless),247,0.97165991902834,0.0,,xgboost
+SteelBench nims_measured,family (carbon / low-alloy / stainless),360,0.975,0.0,,xgboost
+SteelBench all,family (carbon / low-alloy / stainless),1358,0.9418262150220913,0.211340206185567,,xgboost
+Structural S275/S355 members (measured),category,165,0.7515151515151515,0.0,,xgboost
+Collins et al. EN3B / EN8 / SA-540 (measured),category,3,1.0,0.0,EN3B->low_carbon; EN8->medium_carbon; SA540->ni_cr_mo,xgboost
+Legacy dataset (18Ni-Co-Mo maraging type) - open-set,should be flagged unknown,312,1.0,1.0,,xgboost
+SteelBench emk_spec_verified,family (carbon / low-alloy / stainless),751,0.8641810918774967,0.10386151797603196,,aisi_rules
+SteelBench kaggle_measured,family (carbon / low-alloy / stainless),247,0.97165991902834,0.008097165991902834,,aisi_rules
+SteelBench nims_measured,family (carbon / low-alloy / stainless),360,1.0,0.0,,aisi_rules
+SteelBench all,family (carbon / low-alloy / stainless),1358,0.9197349042709867,0.05891016200294551,,aisi_rules
+Structural S275/S355 members (measured),category,165,0.9818181818181818,0.0,,aisi_rules
+Collins et al. EN3B / EN8 / SA-540 (measured),category,3,1.0,0.0,EN3B->low_carbon; EN8->medium_carbon; SA540->ni_cr_mo,aisi_rules
+Legacy dataset (18Ni-Co-Mo maraging type) - open-set,should be flagged unknown,312,0.5833333333333334,0.5833333333333334,,aisi_rules

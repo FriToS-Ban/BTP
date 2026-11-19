@@ -1,0 +1,11 @@
+start,model,n,bias_C,MAE_C
+ferrite,this work,18,4.216666666666659,15.744444444444436
+ferrite,Collins et al. Li model,16,9.624999999999993,11.29999999999999
+ferrite,this work vs published Li,17,1.2205882352941178,1.2205882352941178
+pearlite,this work,10,-10.8,22.65
+pearlite,Collins et al. Li model,9,25.77777777777778,25.77777777777778
+pearlite,this work vs published Li,10,-36.6,36.65
+bainite,this work,5,-19.890000000000008,71.29
+bainite,Collins et al. Li model,5,67.35999999999999,67.35999999999999
+bainite,this work vs published Li,7,-81.32142857142857,81.32142857142857
+martensite,this work,7,-2.852857142857171,7.418571428571446
