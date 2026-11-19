@@ -27,6 +27,7 @@ from .physics import thermo
 from .physics.properties import uniform_elongation_estimate
 
 BUNDLE = config.MODELS_DIR / "steel_predictor.joblib"
+QT_BUNDLE = config.MODELS_DIR / "qt_models.joblib"
 
 
 def default_austenitising_T(comp, route=None):
@@ -148,6 +149,7 @@ class SteelPredictor:
         best = best_estimate_fractions(out)
         for k, v in best.items():
             out[k] = v
+        out["fraction_pm90"] = 1.645 * config.PHASE_FRACTION_STRUCTURAL_SD   # structural band, stage 11
         # toughness indicator: Pickering's impact transition temperature of
         # ferrite-pearlite steels on the reported microstructure (C); not
         # defined when bainite + martensite make up half the structure or more
@@ -177,6 +179,151 @@ class SteelPredictor:
         from .physics.hardenability import ideal_critical_diameter
         out["DI_mm"] = ideal_critical_diameter(df)[1]
         return out
+
+    # ------------------------------------------------- heat treatments (v3)
+    def _qt(self):
+        b = getattr(self, "_qt_bundle", None)
+        if b is None:
+            if not QT_BUNDLE.exists():
+                raise FileNotFoundError(f"{QT_BUNDLE} not found; run pipeline stage 9")
+            b = joblib.load(QT_BUNDLE)
+            self._qt_bundle = b
+        return b
+
+    @staticmethod
+    def _comp_frame(comp):
+        df = pd.DataFrame([dict(comp)])
+        for el in config.ELEMENTS:
+            default = 0.0 if el in ("C", "Mn", "Si") else config.RESIDUAL_TYPICAL.get(el, 0.0)
+            if el not in df.columns:
+                df[el] = default
+            df[el] = df[el].astype(float).fillna(default)
+        return df
+
+    @staticmethod
+    def microstructure_label(F, P, B, M, prefix="", fine=None):
+        """Constituents above 2 %, largest first, e.g. 'fine pearlite 54 % + ferrite 46 %'."""
+        parts = [(M, f"{prefix}martensite"), (B, f"{prefix}bainite"), (F, "ferrite"),
+                 (P, f"{fine} pearlite" if fine else "pearlite")]
+        parts = [(v, n) for v, n in parts if np.isfinite(v) and v >= 0.02]
+        parts.sort(key=lambda x: -x[0])
+        return " + ".join(f"{n} {v:.0%}" for v, n in parts) if parts else "n/a"
+
+    @staticmethod
+    def default_quench_medium(comp, section_mm):
+        """Water for shallow-hardening steels (D_I below 1.6 x the bar size),
+        oil otherwise - the usual shop choice that avoids quench cracking."""
+        from .physics.hardenability import ideal_critical_diameter
+        di_mm = float(np.asarray(ideal_critical_diameter(comp)[1]).ravel()[0])
+        return "water" if di_mm < 1.6 * float(section_mm) else "oil"
+
+    def heat_treat(self, comp: dict, treatment: str, section_mm=config.AC_DEFAULT_DIAMETER_MM, medium=None,
+                   temper_T=600.0, temper_h=1.0, sr_T=600.0, sr_h=1.0, sr_base="normalise", T_aust=None,
+                   fc_rate=config.FC_RATE_700C):
+        """One heat treatment of one steel -> one row of HEAT_TREAT_COLUMNS.
+
+        treatment: 'anneal' (furnace cooling), 'normalise' (still air, bar of
+        section_mm), 'harden' (quench, untempered), 'quench_temper' (quench +
+        temper at temper_T for temper_h), 'stress_relieve' (soak at sr_T for
+        sr_h after the state sr_base: 'normalise', 'anneal' or 'quench_temper').
+        Properties are at the tensile-specimen position of the bar (ASTM A370).
+        """
+        from .models.flags import composition_flags
+        from .physics import precipitation, stress_relief, thermo as th
+        df = self._comp_frame(comp)
+        flags = composition_flags(df)
+        row = {"treatment": treatment, "section_mm": float(section_mm)}
+        if treatment in ("anneal", "normalise"):
+            route = "FC" if treatment == "anneal" else "AC"
+            d = df.assign(route=route, section_mm=section_mm, fc_rate=fc_rate)
+            if T_aust is not None:
+                d["treat_T_C"] = T_aust
+            o = self.predict(d).iloc[0]
+            dppt = float(precipitation.strengthening(d, o["treat_T_C"], route)[0])
+            row.update(route=route, medium="furnace" if route == "FC" else "still air", T_aust_C=o["treat_T_C"],
+                       temper_T_C=np.nan, F=o["F_best"], P=o["P_best"] + o["Fe3C_best"], B=o["B_best"],
+                       M=o["M_best"], S0_um=o["S0_um"], d_alpha_um=o["d_alpha_um"],
+                       cool_rate_700=o["cool_rate_700"], ITT_C=o["ITT_best_C"], dsigma_ppt_MPa=dppt,
+                       in_domain=bool(o["in_domain"]))
+            for t in ("UTS_MPa", "YS_MPa", "El_pct"):
+                add = dppt if t == "YS_MPa" else (0.7 * dppt if t == "UTS_MPa" else 0.0)
+                for s in ("pred", "lo90", "hi90"):
+                    row[f"{t}_{s}"] = o[f"{t}_{s}"] + add
+            row.update(HB=o["HB_pred"] + 0.7 * dppt / 3.45, HRC=np.nan)
+            row["HV"] = row["HB"] / 0.95
+            row["microstructure"] = self.microstructure_label(row["F"], row["P"], row["B"], row["M"],
+                                                              fine="coarse" if route == "FC" else "fine")
+        elif treatment in ("harden", "quench_temper"):
+            medium = medium or self.default_quench_medium(df, section_mm)
+            d = df.assign(quench_medium=medium, section_mm=section_mm,
+                          temper_T_C=np.nan if treatment == "harden" else temper_T,
+                          temper_time_h=temper_h)
+            if T_aust is not None:
+                d["treat_T_C"] = T_aust
+            o = self._qt().predict(d).iloc[0]
+            row.update(route="Q" if treatment == "harden" else "QT", medium=medium, T_aust_C=o["treat_T_C"],
+                       temper_T_C=o["temper_T_C"], F=float(o["k_f_ferrite"]),
+                       P=float(o["k_f_pearlite"] + o["k_f_cementite_pro"]), B=float(o["f_B"]), M=float(o["f_M"]),
+                       S0_um=np.nan, d_alpha_um=np.nan, cool_rate_700=o["cool_rate_700"], ITT_C=np.nan,
+                       dsigma_ppt_MPa=0.0, HB=o["HB_est"], HRC=o["HRC_est"], in_domain=True,
+                       TME_risk=bool(o["TME_risk"]), TE_risk=bool(o["TE_risk"]))
+            for t in ("UTS_MPa", "YS_MPa", "El_pct"):
+                for s in ("pred", "lo90", "hi90"):
+                    row[f"{t}_{s}"] = o[f"{t}_{s}"]
+            row["HV"] = o["HV_est"]
+            if treatment == "harden":
+                # untempered martensite: brittle, a tensile test is not meaningful
+                row["UTS_equiv_MPa"] = row["UTS_MPa_pred"]
+                for t in ("UTS_MPa", "YS_MPa", "El_pct"):
+                    for s in ("pred", "lo90", "hi90"):
+                        row[f"{t}_{s}"] = np.nan
+            pre = "tempered " if treatment == "quench_temper" else ""
+            row["microstructure"] = self.microstructure_label(row["F"], row["P"], row["B"], row["M"], prefix=pre)
+        elif treatment == "stress_relieve":
+            base = self.heat_treat(comp, sr_base, section_mm, medium, temper_T, temper_h, T_aust=T_aust,
+                                   fc_rate=fc_rate).iloc[0].to_dict()
+            if sr_base == "quench_temper":
+                # Hollomon-Jaffe additivity: the soak counts only if it tempers the
+                # steel further (a parameter more than ~50 above the prior one, about
+                # 2.5 C); the softer state is then predicted as its equivalent tempering
+                # temperature for the original time, the form the models were trained on
+                from .physics import tempering as tp
+                P1 = float(tp.hollomon_jaffe(temper_T, temper_h))
+                P_after = float(stress_relief.tempering_after_relief(P1, sr_T, sr_h))
+                row["P_before"], row["P_after"] = P1, P_after
+                if P_after > P1 + 50.0:
+                    T_eq = P_after / (tp.C_HJ + np.log10(temper_h)) - 273.15
+                    re = self.heat_treat(comp, "quench_temper", section_mm, base["medium"], T_eq, temper_h,
+                                         T_aust=T_aust).iloc[0].to_dict()
+                    base.update({k: re[k] for k in re if k.startswith(("UTS", "YS", "El", "HB", "HRC", "HV"))})
+            row.update({k: v for k, v in base.items() if k not in ("treatment",)})
+            row["microstructure"] = "unchanged: " + str(base["microstructure"])
+            row["sr_T_C"], row["sr_h"] = sr_T, sr_h
+            row["subcritical"] = bool(stress_relief.is_subcritical(df, sr_T)[0])
+            row["residual_stress_bound_MPa"] = float(stress_relief.residual_stress_bound(base["YS_MPa_pred"], sr_T))
+            row["Ac1_C"] = float(th.andrews_ac1(df)[0])
+        else:
+            raise ValueError(f"unknown treatment {treatment!r}")
+        # structural uncertainty of every phase fraction (stage 11): +/- at 90 %
+        row["fraction_pm90"] = 1.645 * config.PHASE_FRACTION_STRUCTURAL_SD
+        row["microalloyed"] = bool(flags["microalloyed"][0])
+        row["tmcp_like"] = bool(flags["tmcp_like"][0])
+        row["boron"] = bool(flags["boron"][0])
+        row["notes"] = str(flags["composition_notes"][0])
+        return pd.DataFrame([row])
+
+    def compare_treatments(self, comp: dict, section_mm=config.AC_DEFAULT_DIAMETER_MM, medium=None,
+                           temper_T=600.0, temper_h=1.0, sr_T=600.0, sr_h=1.0):
+        """The five classic heat treatments of one steel, side by side:
+        annealing, normalising, hardening, hardening + tempering, and stress
+        relieving (of the normalised bar)."""
+        rows = [self.heat_treat(comp, "anneal", section_mm),
+                self.heat_treat(comp, "normalise", section_mm),
+                self.heat_treat(comp, "harden", section_mm, medium),
+                self.heat_treat(comp, "quench_temper", section_mm, medium, temper_T, temper_h),
+                self.heat_treat(comp, "stress_relieve", section_mm, medium, temper_T, temper_h, sr_T, sr_h,
+                                sr_base="normalise")]
+        return pd.concat(rows, ignore_index=True)
 
     def what_if(self, comp: dict, section_mm=config.AC_DEFAULT_DIAMETER_MM, fc_rate=config.FC_RATE_700C,
                 T_aust=None):

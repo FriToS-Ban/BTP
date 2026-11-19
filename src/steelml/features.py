@@ -158,3 +158,135 @@ PHYSICS_FEATURES = [
     "log10_rate", "d_gamma_um", "CE_IIW", "ss_index",
     "UTS_phys", "YS_phys", "HV_phys",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Hardened (quenched) and quenched-and-tempered states
+# ---------------------------------------------------------------------------
+# Tensile specimens of bars up to 1.5 in. (38 mm) are machined from the centre,
+# those of larger bars at mid-radius (ASTM A370, steel bar products). The
+# quench path is computed at that position; stage 10 tests the choice.
+SPECIMEN_CENTRE_MAX_MM = 38.0
+DEFAULT_TEMPER_TIME_H = 1.0   # when a source gives no tempering time (stage 10 tests 2 h)
+# As-quenched martensite hardness levels off above about 0.6 % C at about
+# 66 HRC (865 HV): retained austenite offsets the harder plate martensite
+# (Krauss 2015, Steels: Processing, Structure, and Performance, ch. 17).
+# Maynier's linear carbon term keeps rising (1080 would be 68 HRC), so it is capped.
+HV_MARTENSITE_MAX = 865.0
+QT_PHYSICS_FEATURES = ["log10_rate", "f_M", "f_B", "f_FP", "HV_M0", "HV_asQ", "P_k", "S_soft",
+                       "HV_T_phys", "UTS_qt_phys"]
+
+
+def specimen_position(D_mm):
+    """r/R of the tensile specimen axis: 0 (centre) up to 38 mm, 0.5 above."""
+    return np.where(np.asarray(D_mm, float) <= SPECIMEN_CENTRE_MAX_MM, 0.0, 0.5)
+
+
+def quench_H(medium, h_mult=None):
+    """Grossmann H (1/in) for each row's quench medium ('water', 'oil', 'brine',
+    'ideal'), optionally scaled by a calibrated multiplier per medium."""
+    from .physics import quench
+    out = []
+    for m in medium:
+        if m == "ideal":
+            out.append(np.inf)
+            continue
+        H = quench.severity(m, "mild")["H_nom"]
+        if h_mult is not None:
+            H *= float(h_mult.get(m, 1.0))
+        out.append(H)
+    return np.array(out, float)
+
+
+def featurize_quench(df: pd.DataFrame, theta=None, h_mult=None) -> pd.DataFrame:
+    """Physics descriptors of a quenched (route 'Q') or quenched-and-tempered
+    (route 'QT') bar.
+
+    Required columns: elements, 'quench_medium' ('water', 'oil', 'brine' or
+    'ideal'), 'section_mm' (bar diameter). Optional: 'treat_T_C' (austenitising
+    temperature; default thermo.default_austenitising_T(..., 'Q')),
+    'temper_T_C' (NaN = untempered), 'temper_time_h' (default 1 h), 'pos_rR'
+    (specimen position, default ASTM A370), 'H' (Grossmann severity, default
+    the nominal value of the medium, times ``h_mult[medium]``).
+
+    Steps: radial quench path at the specimen position (physics.quench) ->
+    transformation kinetics (martensite, bainite, ferrite + pearlite) ->
+    as-quenched hardness of each constituent (Maynier et al. 1978) at the
+    local 700 C cooling rate -> Hollomon-Jaffe parameter -> tempered hardness
+    (physics.tempering, constants ``theta``; prior means if None) -> UTS = 3.3 HV.
+    """
+    from .physics import quench, tempering
+
+    df = df.copy()
+    for el in EL:
+        if el not in df.columns:
+            df[el] = 0.0
+        df[el] = df[el].fillna(0.0)
+    if "treat_T_C" not in df.columns:
+        df["treat_T_C"] = np.nan
+    df["treat_T_C"] = df["treat_T_C"].fillna(pd.Series(
+        np.asarray(thermo.default_austenitising_T(df, np.full(len(df), "Q")), float), index=df.index))
+    if "temper_T_C" not in df.columns:
+        df["temper_T_C"] = np.nan
+    if "temper_time_h" not in df.columns:
+        df["temper_time_h"] = DEFAULT_TEMPER_TIME_H
+    df["temper_time_h"] = df["temper_time_h"].fillna(DEFAULT_TEMPER_TIME_H)
+    if "pos_rR" not in df.columns:
+        df["pos_rR"] = specimen_position(df["section_mm"])
+    H = df["H"].to_numpy(float) if "H" in df.columns else quench_H(df["quench_medium"], h_mult)
+    df["H_used"] = H
+
+    cache, paths = {}, []
+    for T0, D, Hh, med, pos in zip(df.treat_T_C, df.section_mm, H, df.quench_medium, df.pos_rR):
+        key = (round(float(T0)), round(float(D), 1), float(Hh), str(med))
+        if key not in cache:
+            ps = quench.quench_paths(key[0], key[1], H=Hh, medium=None if np.isfinite(Hh) else None,
+                                     T_q=quench.T_QUENCHANT.get(str(med), 25.0),
+                                     positions=(0.0, 0.25, 0.5, 0.75, 1.0))
+            cache[key] = ps
+        ps = cache[key]
+        # linear interpolation in r/R between the stored positions
+        x = float(np.clip(pos, 0.0, 1.0)) * 4.0
+        i = min(int(np.floor(x)), 3)
+        w = x - i
+        paths.append(((1.0 - w) * ps[i][0] + w * ps[i + 1][0], ps[i][1]))
+
+    G = ms.austenite_astm(df.treat_T_C.to_numpy(float), df.get("coarse_grained", False))
+    kin = kinetics.simulate_batch(df[EL], G, paths)
+    kin.index = df.index
+    out = pd.concat([df, kin.add_prefix("k_")], axis=1)
+    rate = np.array([cooling.rate_at(t, T, 700.0) for t, T in paths])
+    out["cool_rate_700"] = rate
+    out["log10_rate"] = np.log10(np.maximum(rate, 1e-4))
+    out["t85_s"] = [cooling.t85(t, T) for t, T in paths]
+    out["astm_G"] = G
+    fM = out.k_f_martensite.to_numpy() + out.k_f_austenite_ret.to_numpy()   # retained austenite counted with martensite
+    fB = out.k_f_bainite.to_numpy()
+    fFP = out.k_f_ferrite.to_numpy() + out.k_f_pearlite.to_numpy() + out.k_f_cementite_pro.to_numpy()
+    tot = np.maximum(fM + fB + fFP, 1e-9)
+    out["f_M"], out["f_B"], out["f_FP"] = fM / tot, fB / tot, fFP / tot
+    hv = pp.hv_maynier(df, rate * 3600.0)
+    out["HV_M0"] = np.minimum(hv["HV_M"], HV_MARTENSITE_MAX)
+    out["HV_B0"] = np.minimum(hv["HV_B"], out["HV_M0"])
+    out["HV_FP0"] = hv["HV_FP"]
+    out["HV_asQ"] = out.f_M * out.HV_M0 + out.f_B * out.HV_B0 + out.f_FP * out.HV_FP0
+    P = np.where(np.isfinite(df.temper_T_C.to_numpy(float)),
+                 tempering.hollomon_jaffe(df.temper_T_C.to_numpy(float), df.temper_time_h.to_numpy(float)), np.nan)
+    out["P_HJ"] = P
+    out["tempered"] = np.isfinite(P).astype(float)
+    out["P_k"] = np.where(np.isfinite(P), P / 1000.0, 7.0)   # untempered ~ room-temperature ageing
+    out["S_soft"] = np.where(np.isfinite(P), tempering.softening(np.nan_to_num(P), df, theta), 1.0)
+    add_tempered_physics(out, theta)
+    out["DI_mm"] = __import__("steelml.physics.hardenability", fromlist=["x"]).ideal_critical_diameter(df)[1]
+    out["CE_IIW"] = thermo.carbon_equivalent_iiw(df)
+    return out
+
+
+def add_tempered_physics(out, theta=None):
+    """(Re)compute the tempered hardness and its UTS for given constants theta."""
+    from .physics import tempering
+    hvT = tempering.tempered_hv(out.HV_M0, out.HV_B0, out.HV_FP0, out.f_M, out.f_B, out.f_FP,
+                                out.P_HJ, out, theta)
+    out["HV_T_phys"] = hvT
+    out["UTS_qt_phys"] = tempering.UTS_PER_HV * hvT
+    return out

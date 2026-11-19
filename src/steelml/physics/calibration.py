@@ -27,16 +27,28 @@ whether the calibrated kinetics transfer (pipeline/s08_hardenability.py).
 
 Prior: the published model, ln f ~ N(0, 1) (a factor of e either way at one
 standard deviation), dBs ~ N(0, 50 C), ln sigma_m ~ N(ln 3 HRC, 1).
-Posterior: the maximum a posteriori point (Nelder-Mead from several starts)
-with a Laplace (Gaussian) approximation around it. A random-walk Metropolis
-sampler is kept for completeness; on these data it mixes poorly (the
-hardness data alone leave the factors strongly correlated), which is itself
-a finding: hardness cannot tell which reaction is too slow.
 
-Result (stage 8): the calibration fits the H-bands of grades it never saw
-much better than the published constants, but it does not transfer to the
-independent phase-fraction and hardness data, so the production chain keeps
-the published Li et al. constants.
+Posterior, stage 8: the maximum a posteriori point (Nelder-Mead from several
+starts) with a Laplace approximation around it. The likelihood is not smooth
+(a reaction starts within a time step or not), so the numerical Hessian is
+unreliable. It gave posterior standard deviations larger than the prior's
+(1000 for ln f_F), which is impossible for a proper posterior.
+
+Posterior, stage 11 (pipeline/s11_kinetic_uncertainty.py): four adaptive
+Metropolis chains started from overdispersed points. Split R-hat is at most
+1.01 and the effective sample size is 450-810 for every constant. The bands
+pin the bainite constants tightly (ln f_B 4.44 +/- 0.06, dBs -108 +/- 1.4 C),
+leave the ferrite factor almost at its prior (sd 0.58 against 1), and prefer
+a pearlite factor of 0.72 (0.68-0.77) over the published 1.0 that the stage-8
+search stopped at. Pushed through to the 423 independent CCT-atlas points,
+the parameter uncertainty is far too small to cover the errors: 33-60 % of
+the points fall in the 90 % band. The error is structural (equation form,
+sd about 0.22 in phase fraction and 66 HV), and only a band that includes it
+covers 90 %.
+
+What production uses (config): the stage-8 MAP for the bainite constants
+(they transfer to the dilatometry and handbook data, stage 8) and the
+published ferrite and pearlite constants.
 """
 
 from __future__ import annotations

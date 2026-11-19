@@ -45,14 +45,23 @@ FC_RATE_RANGE = (0.003, 0.03)
 AC_DEFAULT_DIAMETER_MM = 25.0  # default for what-if studies (single 25 mm bar, ~1 K/s)
 AC_DIAMETER_RANGE_MM = (10.0, 100.0)
 
-# Effective conditions of the ASM/Bethlehem handbook data, calibrated in
-# s03 from a scan of the physics-baseline hardness error (no ML involved).
-# Normalized rows: the error is flat between ~50 and 80 mm bars in still air
-# (21-22 HB RMSE vs 58 HB at 25 mm); 50 mm (~0.5 K/s at 700 C, e.g. bars
-# cooled in a rack rather than singly) is taken at the start of that flat
-# region. Annealed rows: the error hardly changes below 0.01 K/s; 0.005 K/s
-# (18 K/h) is the usual full-annealing furnace cool for alloy steels.
-HANDBOOK_AC_SECTION_MM = 50.0
+# Conditions of the ASM/Bethlehem handbook data.
+# * Normalized rows: 25 mm (1 in.) rounds, DOCUMENTED. The same handbook values
+#   appear in the Birbilis et al. (2025) database with the bar size written out
+#   ("Normalized, 25 mm (1 In.) Round"): for 21 of the 28 grades in both, the
+#   tensile strength agrees within 3 MPa (mean difference 0.4 MPa, against
+#   -29 MPa for the 50 mm and +41 MPa for the 13 mm bars; stage 10,
+#   results/s10_handbook_section_match.csv). Versions 1-2 of this project
+#   *inferred* 50 mm from a scan of the physics-only hardness error, which is
+#   lowest for 50-80 mm bars: that scan was absorbing a bias of the physics
+#   chain, not finding the bar size. The scan is kept in stage 3 as a check of
+#   that bias.
+# * Annealed rows: the furnace cooling rate is not documented anywhere; 0.005
+#   K/s (18 K/h) is the usual full-annealing furnace cool for alloy steels and
+#   the physics-only error hardly changes below 0.01 K/s. It remains an
+#   inferred condition, so stage 10 retrains the models over 0.002-0.02 K/s.
+HANDBOOK_AC_SECTION_MM = 25.0
+HANDBOOK_AC_SECTION_INFERRED_V2_MM = 50.0   # the earlier inferred value, kept for the comparison
 HANDBOOK_FC_RATE = 0.005
 
 # Transformation-model constants (multipliers on the Li et al. rate constants
@@ -88,6 +97,14 @@ BAINITE_START_SHIFT_C = -107.2
 #   cooled pearlite 2-3 um).
 SPACING_A_UM = 3.33
 SPACING_EXPONENT = 0.607
+
+# Structural error of the transformation model's phase fractions: the standard
+# deviation that, added to the posterior band of the kinetic constants, makes
+# 90 % bands cover 90 % of the 423 independent CCT-atlas points (mean over
+# ferrite + pearlite, bainite and martensite; pipeline/s11_kinetic_uncertainty.py,
+# results/s11_cct_atlas_coverage.csv). The parameter band itself is nearly zero,
+# so every reported phase fraction carries +/- 1.645 x this value at 90 %.
+PHASE_FRACTION_STRUCTURAL_SD = 0.24
 
 # Default prior-austenite grain size (ASTM number) for fine-grained,
 # aluminium-killed steels austenitised at 800-925 C.

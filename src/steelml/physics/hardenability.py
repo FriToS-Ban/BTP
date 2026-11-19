@@ -68,3 +68,39 @@ def ideal_critical_diameter(comp):
     for f in multiplying_factors(comp).values():
         d = d * f
     return d, 25.4 * d
+
+
+def model_critical_diameter(comp, H=np.inf, T_aust=None, G=7.0, f_target=0.5, d_lo=2.0, d_hi=400.0, iters=14):
+    """Bar diameter (mm) whose centre reaches ``f_target`` martensite in a quench
+    of severity H (np.inf = ideal quench), from the radial heat flow
+    (physics.quench) and the transformation kinetics. With H = inf and
+    f_target = 0.5 this is Grossmann's definition of D_I, so it can be checked
+    against the ASTM A255 value, which comes from measured hardenability
+    and not from the kinetic model. comp: dict or one-row DataFrame.
+    Returns NaN when even the smallest bar misses the target and d_hi when even
+    the largest reaches it."""
+    import pandas as pd
+
+    from . import kinetics, quench, thermo
+
+    row = pd.DataFrame([comp]) if isinstance(comp, dict) else comp.iloc[[0]].reset_index(drop=True)
+    T0 = float(np.asarray(thermo.default_austenitising_T(row, np.array(["Q"])), float).ravel()[0]) \
+        if T_aust is None else float(T_aust)
+
+    def fm(D):
+        p = quench.quench_paths(T0, D, H=H, positions=(0.0,))
+        k = kinetics.simulate_batch(row, np.array([G]), p)
+        return float(k.f_martensite.iloc[0] + k.f_austenite_ret.iloc[0])
+
+    if fm(d_lo) < f_target:
+        return np.nan
+    if fm(d_hi) >= f_target:
+        return d_hi
+    lo, hi = d_lo, d_hi
+    for _ in range(iters):
+        mid = np.sqrt(lo * hi)
+        if fm(mid) >= f_target:
+            lo = mid
+        else:
+            hi = mid
+    return float(np.sqrt(lo * hi))

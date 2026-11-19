@@ -174,18 +174,28 @@ def upper_critical(comp):
 ANNEAL_ABOVE_AE3, ANNEAL_ABOVE_AE1 = 50.0, 65.0
 NORMALISE_ABOVE_UPPER, NORMALISE_MIN_C = 110.0, 870.0
 NORMALISING_ROUTES = ("AC", "AR")
+# Hardening (austenitising before a quench): fitted to the 349 quench
+# temperatures of the Birbilis et al. (2025) quenched-and-tempered bars,
+# max(Ae3 + 70, Ae1 + 90) C, MAE 16 C, bias -1 C. Hypoeutectoid steels are
+# quenched from about 70 C above Ae3 (fully austenitic); hypereutectoid steels
+# from between A1 and Acm, as usual practice.
+HARDEN_ABOVE_AE3, HARDEN_ABOVE_AE1 = 70.0, 90.0
+HARDENING_ROUTES = ("Q", "QT")
 
 
 def default_austenitising_T(comp, route=None):
-    """Usual austenitising temperature (C) for the cooling route: furnace
-    cooling (full annealing, also used for dilatometry-type routes) or air
-    cooling (normalising). ``route`` may be a scalar or an array; without it
-    the annealing temperature is returned."""
+    """Usual austenitising temperature (C) for the route: furnace cooling
+    (full annealing, also used for dilatometry-type routes), air cooling
+    (normalising) or a quench (hardening). ``route`` may be a scalar or an
+    array; without it the annealing temperature is returned."""
     anneal = np.maximum(ae3(comp) + ANNEAL_ABOVE_AE3, ae1(comp) + ANNEAL_ABOVE_AE1)
     if route is None:
         return anneal
     normalise = np.maximum(upper_critical(comp) + NORMALISE_ABOVE_UPPER, NORMALISE_MIN_C)
-    return np.where(np.isin(np.asarray(route).astype(str), NORMALISING_ROUTES), normalise, anneal)
+    harden = np.maximum(ae3(comp) + HARDEN_ABOVE_AE3, ae1(comp) + HARDEN_ABOVE_AE1)
+    r = np.asarray(route).astype(str)
+    return np.where(np.isin(r, NORMALISING_ROUTES), normalise,
+                    np.where(np.isin(r, HARDENING_ROUTES), harden, anneal))
 
 
 def bainite_start(comp, C=None):

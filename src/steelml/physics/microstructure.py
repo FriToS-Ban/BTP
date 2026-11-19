@@ -26,6 +26,10 @@ from __future__ import annotations
 
 import numpy as np
 
+# shift of the assumed prior-austenite grain size (ASTM numbers; 0 = the rule
+# below); stage 10 varies it in the sensitivity analysis
+ASTM_OFFSET = 0.0
+
 
 def astm_to_um(G):
     """ASTM E112 grain-size number -> mean lineal intercept (um)."""
@@ -49,7 +53,7 @@ def austenite_astm(T_aust, coarse_grained=False):
     T = np.asarray(T_aust, dtype=float)
     G = 8.0 - np.maximum(T - 850.0, 0.0) / 100.0
     G = np.where(coarse_grained, G - 2.0, G)
-    return np.clip(G, 4.0, 9.0)
+    return np.clip(G, 4.0, 9.0) + ASTM_OFFSET
 
 
 def pearlite_spacing_um(T_pearlite, Ae1, min_undercooling=5.0, A=None, m=None):

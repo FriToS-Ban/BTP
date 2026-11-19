@@ -33,6 +33,9 @@ RHO = 7850.0           # kg/m3
 SIGMA = 5.670374e-8    # W m^-2 K^-4
 EPS = 0.8
 T_AMB = 25.0
+# multiplier on the natural-convection coefficient (1.0 = the correlation as
+# published); stage 10 varies it, with EPS, in the sensitivity analysis
+H_CONV_FACTOR = 1.0
 
 T_GRID_TOP = 1000.0
 T_GRID_BOTTOM = 20.0
@@ -51,7 +54,7 @@ def cp_eurocode(T):
 
 def h_convection(T, D_m):
     dT = np.maximum(np.asarray(T, float) - T_AMB, 1e-6)
-    return 1.32 * (dT / D_m) ** 0.25
+    return H_CONV_FACTOR * 1.32 * (dT / D_m) ** 0.25
 
 
 def air_cooling_rate(T, D_mm):
