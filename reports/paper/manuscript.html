@@ -22,7 +22,7 @@ th { border-bottom: 1pt solid #333; font-weight: 600; }
 ol.refs { font-size: 8.9pt; padding-left: 18pt; }
 ol.refs li { margin-bottom: 2.5pt; }
 ul { margin-top: 0; }
-</style></head><body><h1>Furnace cooling versus air cooling of carbon and low-alloy steels: a physics-anchored, uncertainty-aware prediction of microstructure and tensile properties with a hardenability-calibrated transformation model</h1>
+</style></head><body><h1>Furnace cooling versus air cooling of carbon and low-alloy steels, and the rest of the heat-treatment route: a physics-anchored, uncertainty-aware prediction of microstructure and tensile properties</h1>
 
 <div class="authors">Aviral Singh, Shibasish Banerjee, Anish Karmakar*</div>
 <div class="affil">Department of Metallurgical and Materials Engineering, Indian Institute of Technology Roorkee, Roorkee 247667, India.
@@ -36,6 +36,8 @@ ul { margin-top: 0; }
 <li>A cross-validated Bayesian recalibration of the bainite reaction transfers to independent dilatometry and a CCT atlas.</li>
 <li>Physics carries extrapolation to new cooling rates; machine learning corrects the textbook structure-property laws.</li>
 <li>Air cooling refines plain-carbon steels but turns hardenable Cr-Mo and Ni-Cr-Mo bars partly bainitic.</li>
+<li>Hardening, tempering and stress relieving in the same chain: quench heat flow, a Hollomon-Jaffe tempering model, 75 MPa on unseen grades.</li>
+<li>A documented bar size replaced an inferred one, and an MCMC posterior shows the kinetic errors are structural, not parametric.</li>
 </ul>
 </div>
 
@@ -51,11 +53,17 @@ laws, and Gaussian-process models that learn a multiplicative correction to the 
 hardenability bands of 80 steels the published kinetics were too hardenable away from the quenched end; a Bayesian
 recalibration of the bainite reaction, cross-validated by grade, reduced the band error from 10.1 to 5.9 HRC and moved the
 predicted bainite start onto independent dilatometry. On grades unseen in training the model predicts tensile strength
-within 53 MPa, yield strength within 42 MPa and hardness within 14 HB (RMSE), against 82, 82 and 19 for the
+within 47 MPa, yield strength within 44 MPa and hardness within 16 HB (RMSE), against 94, 100 and 23 for the
 textbook laws alone, and it keeps physically consistent trends at cooling rates absent from the training data. Applied
 to 271 standard grades, it shows that air cooling only refines low-carbon steels, raises the strength of medium- and
 high-carbon steels through finer pearlite and ferrite, and gives hardenable Cr-Mo and Ni-Cr-Mo bars a partly bainitic
-structure, so that for them bar size matters as much as the route.</p>
+structure, so that for them bar size matters as much as the route. The chain is extended to hardening (radial quench heat flow with
+Grossmann's severity), tempering (a Hollomon-Jaffe master curve with secondary hardening, fitted on 324 quenched-and-tempered
+bars of 28 grades at four bar sizes) and stress relieving. It predicts the tensile strength of quenched-and-tempered
+bars of unseen grades within 75 MPa (textbook physics alone: 247 MPa) and reproduces the mass effect. An explicit
+register of assumptions corrected the bar size of the handbook's normalised data (25 mm, documented, instead of an inferred
+50 mm). A Markov-chain Monte Carlo posterior of the kinetic constants, propagated to an independent CCT atlas, shows that
+the transformation model's errors are structural rather than parametric.</p>
 <p class="kw"><b>Keywords:</b> normalising; full annealing; continuous cooling transformation; hardenability; Jominy;
 physics-informed machine learning; Gaussian process; conformal prediction</p>
 
@@ -196,33 +204,33 @@ size.</figcaption></figure>
 
 <h3>4.3 Properties</h3>
 <p class="tcap"><b>Table 3.</b> Leave-one-grade-out RMSE on unseen grades inside the domain (27 grades).</p>
-<table><thead><tr><th>Model</th><th>UTS (MPa)</th><th>YS (MPa)</th><th>Total El (%)</th><th>HB</th></tr></thead><tbody><tr><td>Textbook relations only (Gladman, Maynier; El: training mean)</td><td>81.5</td><td>82.1</td><td>7.0</td><td>19.0</td></tr><tr><td>Ridge, composition</td><td>78.0</td><td>74.7</td><td>2.3</td><td>23.1</td></tr><tr><td>Gradient boosting, composition</td><td>86.8</td><td>62.1</td><td>3.1</td><td>24.6</td></tr><tr><td>GP, composition</td><td>58.5</td><td>54.7</td><td>2.5</td><td>22.4</td></tr><tr><td>GP, physics descriptors</td><td>59.1</td><td>51.7</td><td>2.7</td><td>16.8</td></tr><tr><td>Grey box (learned Gladman law)</td><td>88.7</td><td>56.4</td><td>4.3</td><td>26.2</td></tr><tr><td>Textbook + GP residual</td><td>64.4</td><td>46.5</td><td>2.4</td><td>15.5</td></tr><tr><td>GP, composition + physics</td><td>50.6</td><td>48.7</td><td>2.6</td><td>17.6</td></tr><tr><td>Physics-anchored chain</td><td>58.8</td><td>47.2</td><td>3.5</td><td>17.5</td></tr><tr><td><b>Production ensemble</b></td><td>52.5</td><td>42.0</td><td>2.7</td><td>13.7</td></tr></tbody></table>
-<p>The production model predicts UTS within 53 MPa (R² 0.93) and hardness within 14 HB (R² 0.94), clearly better than the textbook
-laws (Holm-adjusted p = 0.006 for UTS) and statistically tied, inside the data, with a composition-only GP (difference 6 MPa,
-95 % interval -10 to 23). Its advantage lies outside the data: at cooling rates of 0.1-5 K/s that the training data do not
-contain it predicts the dilatometry hardness within 59 HB, against 57 HB for the textbook laws and 95 HB for the composition
-GP, which cannot produce martensite hardness. Anchoring on the Gladman law instead of the Maynier hardness cut the dilatometry hardness error from 67 to 59 HB and the out-of-domain UTS error from 119 to 114 MPa, while the in-domain UTS error changed from 49 to 53 MPa and elongation from 2.4 to 2.7 % (`results/s04_anchor_ablation.csv`). Its UTS moves the wrong way in only 1.5 % of the steps of the
-cooling-rate sweeps and changes by 23 MPa over 0.10-0.40 % Si (with silicon as an ML input: 217 MPa). Varying each training
-grade's composition within its own specification range moves the predicted UTS by 20 MPa (furnace) and 53 MPa (air, RMS), so
+<table><thead><tr><th>Model</th><th>UTS (MPa)</th><th>YS (MPa)</th><th>Total El (%)</th><th>HB</th></tr></thead><tbody><tr><td>Textbook relations only (Gladman, Maynier; El: training mean)</td><td>94.4</td><td>100.4</td><td>7.0</td><td>22.9</td></tr><tr><td>Ridge, composition</td><td>77.0</td><td>73.8</td><td>2.3</td><td>22.8</td></tr><tr><td>Gradient boosting, composition</td><td>86.9</td><td>62.2</td><td>3.1</td><td>24.6</td></tr><tr><td>GP, composition</td><td>63.1</td><td>53.7</td><td>2.5</td><td>19.9</td></tr><tr><td>GP, physics descriptors</td><td>52.5</td><td>43.5</td><td>2.7</td><td>20.3</td></tr><tr><td>Grey box (learned Gladman law)</td><td>92.3</td><td>62.6</td><td>4.2</td><td>27.2</td></tr><tr><td>Textbook + GP residual</td><td>55.6</td><td>46.1</td><td>2.4</td><td>17.5</td></tr><tr><td>GP, composition + physics</td><td>55.0</td><td>55.4</td><td>2.7</td><td>17.3</td></tr><tr><td>Physics-anchored chain</td><td>45.4</td><td>43.9</td><td>2.8</td><td>17.6</td></tr><tr><td><b>Production ensemble</b></td><td>47.1</td><td>43.9</td><td>2.6</td><td>15.9</td></tr></tbody></table>
+<p>The production model predicts UTS within 47 MPa (R² 0.94) and hardness within 16 HB (R² 0.92), clearly better than the textbook
+laws (Holm-adjusted p = 0.001 for UTS) and statistically tied, inside the data, with a composition-only GP (difference 16 MPa,
+95 % interval 2 to 30). Its advantage lies outside the data: at cooling rates of 0.1-5 K/s that the training data do not
+contain it predicts the dilatometry hardness within 68 HB, against 57 HB for the textbook laws and 109 HB for the composition
+GP, which cannot produce martensite hardness. Anchoring on the Gladman law instead of the Maynier hardness cut the dilatometry hardness error from 73 to 68 HB and the out-of-domain UTS error from 114 to 108 MPa, while the in-domain UTS error changed from 48 to 47 MPa and elongation from 2.6 to 2.6 % (`results/s04_anchor_ablation.csv`). Its UTS moves the wrong way in only 0.5 % of the steps of the
+cooling-rate sweeps and changes by 26 MPa over 0.10-0.40 % Si (with silicon as an ML input: 264 MPa). Varying each training
+grade's composition within its own specification range moves the predicted UTS by 18 MPa (furnace) and 59 MPa (air, RMS), so
 a large part of the remaining error reflects the unknown composition of the tested heats. The 90 % intervals cover 92.5 % of
 unseen grades.</p>
 
 <h3>4.4 External validation</h3>
-<p>For 165 hot-rolled structural members the UTS is predicted within 64 MPa (bias -54) and the elongation within 3.0 %,
-while the yield strength is 76 MPa too low (bias 103 MPa for microalloyed members), as expected for modern
+<p>For 165 hot-rolled structural members the UTS is predicted within 68 MPa (bias -60) and the elongation within 3.0 %,
+while the yield strength is 77 MPa too low (bias 102 MPa for microalloyed members), as expected for modern
 thermomechanically rolled sections that the handbook bars do not represent; the predicted transition temperature ranks their
-Charpy energy with the correct sign (Spearman -0.25). On unflagged literature values the yield strength is 38 MPa and the UTS
-61 MPa off (MAE), and for steels tested after both routes the predicted direction of change is always correct.</p>
+Charpy energy with the correct sign (Spearman -0.25). On unflagged literature values the yield strength is 28 MPa and the UTS
+55 MPa off (MAE), and for steels tested after both routes the predicted direction of change is always correct.</p>
 
 <h3>4.5 Furnace cooling versus air cooling</h3>
 <p class="tcap"><b>Table 4.</b> Median predictions per category for 271 standard grades: furnace cooling (FC, 0.005 K/s) and
-still-air cooling (AC) of a 50 mm bar, with a 25 mm bar in brackets.</p>
-<table><thead><tr><th>Category (grades)</th><th>n</th><th>FC</th><th>AC, 50 mm</th><th>UTS (MPa) FC → AC (25 mm)</th><th>YS (MPa)</th><th>Total El (%)</th><th>Uniform El (%, est., 25 mm)</th><th>HB</th></tr></thead><tbody><tr><td>Low-carbon steel</td><td>85</td><td>P 15 %</td><td>P 15 %</td><td>405 → 435 (447)</td><td>287 → 314</td><td>36 → 36</td><td>18 → 19</td><td>116 → 124</td></tr><tr><td>Medium-carbon steel</td><td>21</td><td>P 54 %</td><td>P 54 %</td><td>538 → 616 (643)</td><td>370 → 402</td><td>28 → 26</td><td>14 → 13</td><td>150 → 186</td></tr><tr><td>High-carbon steel</td><td>20</td><td>P 94 %</td><td>P 94 %</td><td>617 → 885 (920)</td><td>366 → 479</td><td>23 → 15</td><td>12 → 7</td><td>175 → 267</td></tr><tr><td>Free-machining steel</td><td>18</td><td>P 34 %</td><td>P 34 %</td><td>495 → 548 (577)</td><td>313 → 344</td><td>31 → 30</td><td>16 → 15</td><td>145 → 162</td></tr><tr><td>C-Mn / Mn steel</td><td>55</td><td>P 42 %</td><td>P 40 %, B+M 4 %</td><td>490 → 547 (568)</td><td>324 → 342</td><td>32 → 31</td><td>16 → 15</td><td>146 → 159</td></tr><tr><td>Cr / Cr-V steel</td><td>19</td><td>P 64 %</td><td>P 64 %</td><td>607 → 780 (807)</td><td>349 → 471</td><td>25 → 21</td><td>13 → 11</td><td>185 → 228</td></tr><tr><td>Mo / Cr-Mo steel</td><td>17</td><td>P 54 %</td><td>P 31 %, B+M 33 %</td><td>610 → 733 (736)</td><td>383 → 458</td><td>26 → 20</td><td>13 → 10</td><td>177 → 220</td></tr><tr><td>Ni-Cr-Mo / Ni steel</td><td>34</td><td>P 42 %</td><td>P 26 %, B+M 32 %</td><td>582 → 708 (767)</td><td>384 → 425</td><td>28 → 24</td><td>14 → 11</td><td>165 → 207</td></tr><tr><td>Si-Mn spring steel *</td><td>2</td><td>P 67 %</td><td>P 67 %</td><td>779 → 901 (890)</td><td>468 → 507</td><td>22 → 18</td><td>11 → 9</td><td>228 → 250</td></tr></tbody></table><p style='font-size:8.6pt'>P: pearlite (lever split; the kinetic split is the top of a band), B+M: bainite + martensite. * outside the window of the critical-temperature equations (2 % Si).</p>
+still-air cooling (AC) of a 25 mm bar (the documented handbook condition), with a 50 mm bar in brackets.</p>
+<table><thead><tr><th>Category (grades)</th><th>n</th><th>FC</th><th>AC, 25 mm</th><th>UTS (MPa) FC → AC (50 mm)</th><th>YS (MPa)</th><th>Total El (%)</th><th>Uniform El (%, est., 25 mm)</th><th>HB</th></tr></thead><tbody><tr><td>Low-carbon steel</td><td>85</td><td>P 15 %</td><td>P 15 %</td><td>394 → 431 (418)</td><td>274 → 310</td><td>36 → 36</td><td>18 → 19</td><td>112 → 126</td></tr><tr><td>Medium-carbon steel</td><td>21</td><td>P 54 %</td><td>P 54 %</td><td>538 → 617 (611)</td><td>354 → 394</td><td>28 → 26</td><td>14 → 13</td><td>156 → 189</td></tr><tr><td>High-carbon steel</td><td>20</td><td>P 94 %</td><td>P 94 %</td><td>629 → 871 (834)</td><td>366 → 480</td><td>23 → 15</td><td>11 → 7</td><td>182 → 260</td></tr><tr><td>Free-machining steel</td><td>18</td><td>P 34 %</td><td>P 28 %, B+M 11 %</td><td>497 → 549 (531)</td><td>315 → 347</td><td>31 → 31</td><td>16 → 15</td><td>144 → 165</td></tr><tr><td>C-Mn / Mn steel</td><td>55</td><td>P 42 %</td><td>P 36 %, B+M 11 %</td><td>487 → 537 (527)</td><td>326 → 340</td><td>32 → 31</td><td>16 → 16</td><td>142 → 159</td></tr><tr><td>Cr / Cr-V steel</td><td>19</td><td>P 64 %</td><td>P 58 %, B+M 8 %</td><td>606 → 785 (743)</td><td>348 → 475</td><td>25 → 22</td><td>13 → 11</td><td>178 → 228</td></tr><tr><td>Mo / Cr-Mo steel</td><td>17</td><td>P 54 %</td><td>P 25 %, B+M 43 %</td><td>611 → 741 (719)</td><td>373 → 454</td><td>26 → 20</td><td>13 → 10</td><td>176 → 226</td></tr><tr><td>Ni-Cr-Mo / Ni steel</td><td>34</td><td>P 42 %</td><td>P 17 %, B+M 50 %</td><td>583 → 711 (665)</td><td>385 → 428</td><td>28 → 23</td><td>14 → 12</td><td>164 → 210</td></tr><tr><td>Si-Mn spring steel *</td><td>2</td><td>P 67 %</td><td>P 67 %</td><td>780 → 912 (906)</td><td>469 → 537</td><td>22 → 18</td><td>11 → 9</td><td>231 → 258</td></tr></tbody></table><p style='font-size:8.6pt'>P: pearlite (lever split; the kinetic split is the top of a band), B+M: bainite + martensite. * outside the window of the critical-temperature equations (2 % Si).</p>
 <p>Low-carbon steels keep ferrite with about 15 % pearlite after both routes; air cooling only refines them, and normalising
 lowers the predicted transition temperature by about 26 °C, consistent with its use for grain refinement (H1). In medium- and
-high-carbon steels the gain grows with the pearlite share, about 79 and 272 MPa for a 50 mm bar (H2; Fig. 6). Hardenable Cr-Mo
-and Ni-Cr-Mo steels become partly bainitic in air-cooled bars (H3); the median Cr-Mo grade gains 114 MPa. Separating the two
-differences between the routes shows that almost all of the gain comes from the faster cooling (medium carbon: +111 MPa) rather
+high-carbon steels the gain grows with the pearlite share, about 79 and 250 MPa for a 25 mm bar (H2; Fig. 6). Hardenable Cr-Mo
+and Ni-Cr-Mo steels become partly bainitic in air-cooled bars (H3); the median Cr-Mo grade gains 117 MPa. Separating the two
+differences between the routes shows that almost all of the gain comes from the faster cooling (medium carbon: +84 MPa) rather
 than from the hotter austenitisation (-4 MPa). Grossmann's ideal critical diameter, computed independently of the kinetics,
 orders the air-cooling response of all grades (Fig. 7), and for hardenable steels the bar size decides between martensite,
 bainite and ferrite + pearlite (H4).</p>
@@ -230,6 +238,40 @@ bainite and ferrite + pearlite (H4).</p>
 against air cooling of a 25 mm bar across the carbon range, with 90 % intervals and handbook values.</figcaption></figure>
 <figure><img src="file:///Users/avii/Documents/BTP/figures/fig25_hardenability_vs_air_cooling.png"><figcaption><b>Fig. 7.</b> Bainite + martensite in a 25 mm air-cooled bar and the
 gain in UTS against the ideal critical diameter (ASTM A255), for all in-scope grades.</figcaption></figure>
+
+<h3>4.6 Hardening, tempering and stress relieving</h3>
+<p>Quench paths come from transient radial conduction in the bar with Grossmann's severity H (h = 2kH, k = 30 W m<sup>-1</sup> K<sup>-1</sup>),
+verified against the exact Bessel-series solution; the specific-heat peak of slow transformation is removed for a quench.
+Against Grossmann's D<sub>I</sub> (ASTM A255), which does not use the kinetics, the model's ideal critical diameter is 1.56 times too
+large (median; 2.53 with the published constants), so the kinetics remain too hardenable, most of all for high-carbon steels.
+Martensite tempers along a logistic master curve of P = T(20 + log t) with alloy-dependent delay and a secondary-hardening term;
+fitted on the 324 bars, molybdenum delays softening by about 40 °C per 0.1 % at 600 °C, and the fully tempered hardness
+rises by only 90 HV per % C against about 950 for untempered martensite: carbon's effect fades with tempering, as Grange,
+Hribal and Porter found. In leave-one-grade-out tests the textbook chain errs by 247 MPa,
+gradient boosting by 112 MPa, a GP by 91 MPa and the production mixture of a physics-anchored GP and a GP by 75 MPa
+(yield strength 85 MPa, elongation 1.7 %), with nested 90 % coverage of 89 % and no bias with bar size (Fig. 9). On
+these bars, which played no part in the calibration, the recalibrated kinetics are neither clearly better nor worse
+(grey box 99 against 96 MPa, physics-anchored GP 86 against 93 MPa), because strength after
+tempering at 480-650 °C is insensitive to the bainite share. A stress relief bounds the residual stress by the Eurocode yield reduction at
+temperature and changes the hardness of a tempered steel only above its tempering parameter (4140 tempered at 600 °C: 991 MPa
+after a 575 °C relief, 916 MPa after 650 °C). Precipitation strengthening of V and Nb is estimated from solubility products and
+Ashby-Orowan; Charpy values of tempered steel are declared out of scope, with embrittlement windows flagged.</p>
+<figure><img src="file:///Users/avii/Documents/BTP/figures/fig36_five_heat_treatments.png"><figcaption><b>Fig. 8.</b> The five classic treatments of six grades as 25 mm bars:
+hardness, tensile strength with 90 % intervals (as-quenched: hardness-equivalent, hatched) and constituents.</figcaption></figure>
+<figure><img src="file:///Users/avii/Documents/BTP/figures/fig34_qt_mass_effect.png"><figcaption><b>Fig. 9.</b> Mass effect of quenched-and-tempered bars: measured UTS (dots)
+and predictions for the grade held out of training (lines, 90 % bands), against bar diameter.</figcaption></figure>
+
+<h3>4.7 Assumptions and kinetic uncertainty</h3>
+<p>All conditions the models rely on are registered with their status and range. The bar size of the handbook's normalised data,
+inferred as 50 mm in earlier versions from the physics-only error, is documented in the Birbilis et al. database: the 25 mm bars
+match within 3 MPa for most grades, the 50 mm bars are on average 29 MPa weaker. Retraining over the range of every remaining
+assumption leaves the furnace-versus-air conclusions unchanged (Fig. 10). The kinetic posterior was sampled with four adaptive
+Metropolis chains (split R-hat ≤ 1.007); propagated to the 423 points of the CCT atlas, the parameter uncertainty covers only
+60 % of the measured ferrite + pearlite fractions, and a structural error of about 0.24 in phase fraction is needed for nominal
+coverage. The model's remaining error is in its form, not its constants.</p>
+<figure><img src="file:///Users/avii/Documents/BTP/figures/fig38_assumption_sensitivity.png"><figcaption><b>Fig. 10.</b> Left: the handbook's normalised values against the
+Birbilis bars of each size. Middle and right: change of the leave-one-grade-out error and of the air-cooling gain when one
+assumption at a time is moved to the end of its range.</figcaption></figure>
 
 <h2>5. Discussion</h2>
 <p>The physics in the chain does not buy much accuracy where data exist: inside the training domain a composition-only GP is
@@ -239,9 +281,10 @@ metallurgical terms. Two lessons generalise. First, cross-validation could not d
 blind to pearlite refinement; both were found only by sweeping one input at a time. Second, a calibration that fits one kind of
 data must be tested on others: a hardness-only calibration can trade errors between mechanisms, and here the bainite
 calibration was accepted because it moved the bainite start onto independent dilatometry and improved independent hardness and
-fraction data. The main limitations are the small and old training set (33 grades at nominal compositions with inferred cooling
-conditions), the estimated nature of uniform elongation, grain size and toughness, the domain shift to modern rolled products,
-and the semi-empirical thermodynamics; tempering after normalising and precipitation strengthening are not modelled.</p>
+fraction data. The main limitations are the small and old training sets (33 handbook grades and 28 quenched-and-tempered grades at nominal
+compositions, with one inferred furnace rate), the structural error of the semi-empirical kinetics, Grossmann's constant
+heat-transfer coefficient for the quench, the estimated nature of precipitation strengthening, uniform elongation, grain size and
+toughness, and the domain shift to modern rolled products, which the tool now detects and declines.</p>
 
 <h2>6. Conclusions</h2>
 <ul>
@@ -255,6 +298,10 @@ together; hardenability (D<sub>I</sub>) orders this response.</li>
 cross-validates and transfers to independent data.</li>
 <li>Anchoring machine learning on microstructure-based physics gives accuracy comparable to the best data-driven model inside
 the data and much better behaviour outside it, with calibrated intervals.</li>
+<li>Hardening and tempering follow from the same kinetics with a quench heat flow and a fitted Hollomon-Jaffe master curve;
+quenched-and-tempered strength is predicted within 75 MPa on unseen grades across 13-100 mm bars.</li>
+<li>Making every assumption explicit corrected one of them, and a proper posterior showed that the remaining kinetic error is
+structural: better equations, not more calibration data of the same kind, are the way forward.</li>
 </ul>
 
 <h2>Appendix: pre-registered experimental validation protocol</h2>
@@ -303,5 +350,12 @@ the project repository; the full pipeline reproduces every number from the commi
 <li>Volkov, A. et al. (2026) SteelBench v1.0, Zenodo, doi:10.5281/zenodo.18530558.</li>
 <li>Xiong, J., Zhang, T.-Y., Shi, S.-Q. (2020) Sci. China Technol. Sci. 63, 1247-1255.</li>
 <li>Zener, C. (1946) Trans. AIME 167, 550-595.</li>
+<li>Birbilis, N., Ghorbani, M., Zhao, S. (2025) A database of mechanical properties of steels. Mendeley Data, doi:10.17632/jmwb9ddd43.1.</li>
+<li>Grossmann, M.A., Asimow, M., Urban, S.F. (1939) Hardenability, its relation to quenching. In Hardenability of Alloy Steels, ASM, 124-196.</li>
+<li>Hollomon, J.H., Jaffe, L.D. (1945) Time-temperature relations in tempering steel. Trans. AIME 162, 223-249.</li>
+<li>Grange, R.A., Hribal, C.R., Porter, L.F. (1977) Metall. Trans. A 8, 1775-1785.</li>
+<li>Gladman, T. (1999) Precipitation hardening in metals. Mater. Sci. Technol. 15, 30-36.</li>
+<li>Haario, H., Saksman, E., Tamminen, J. (2001) An adaptive Metropolis algorithm. Bernoulli 7, 223-242.</li>
+<li>EN 1993-1-2 (2005) Eurocode 3, Part 1-2: thermal and mechanical properties of steel at elevated temperature.</li>
 </ol>
 </body></html>

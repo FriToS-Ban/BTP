@@ -21,6 +21,7 @@ sys.path.insert(0, str(HERE))
 from deck_lib import Deck, img, render_pdf, render_pptx, stat, table  # noqa: E402
 from slides_body import slides_methods  # noqa: E402
 from slides_results import slides_closing, slides_results  # noqa: E402
+from slides_v3 import slides_v3  # noqa: E402
 
 RES = ROOT / "results"
 FIGS = ROOT / "figures"
@@ -132,7 +133,8 @@ def build(N):
     d.add('''<div class="kicker">B.Tech Project MTP-400A · Department of Metallurgical and Materials Engineering, IIT Roorkee</div>
 <h1>Furnace cooling vs air cooling of carbon and low-alloy steels</h1>
 <p style="font-size:24px;line-height:1.35;color:#52514e;max-width:1000px">Predicting the microstructure and the tensile
-properties from the composition and the cooling route, with physics-informed machine learning</p>
+properties from the composition and the heat treatment (annealing, normalising, hardening, tempering, stress relieving),
+with physics-informed machine learning</p>
 <div class="meta">Aviral Singh &nbsp;·&nbsp; Shibasish Banerjee<br>Supervisor: Dr. Anish Karmakar<br>November 2026</div>''',
           cls="title-slide", footer=False)
 
@@ -292,6 +294,7 @@ least settled of the five.</p>''', title="What physical metallurgy predicts, wri
           kicker="Hypotheses")
     slides_methods(d, N)
     slides_results(d, N)
+    slides_v3(d, N)
     slides_closing(d, N)
     return d
 

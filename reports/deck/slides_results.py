@@ -160,15 +160,15 @@ def slides_results(d, N):
             continue
         r = cat.loc[c]
         flag = " *" if r.get("in_validity_share", 1.0) < 0.5 else ""
-        rows.append([c.replace(" steel", "") + flag, f"{int(r.grades)}", micro(r, "FC"), micro(r, "AC50"),
-                     f"{r.UTS_MPa_FC_median:.0f} → {r.UTS_MPa_AC50_median:.0f} ({r.UTS_MPa_AC25_median:.0f})",
-                     f"{r.YS_MPa_FC_median:.0f} → {r.YS_MPa_AC50_median:.0f}",
-                     f"{r.El_pct_FC_median:.0f} → {r.El_pct_AC50_median:.0f}",
-                     f"{r.HB_FC_median:.0f} → {r.HB_AC50_median:.0f}"])
-    body = (table(["Category", "grades", "furnace cooled", "air cooled, 50 mm", "UTS (25 mm)", "YS", "El %", "HB"], rows,
+        rows.append([c.replace(" steel", "") + flag, f"{int(r.grades)}", micro(r, "FC"), micro(r, "AC25"),
+                     f"{r.UTS_MPa_FC_median:.0f} → {r.UTS_MPa_AC25_median:.0f} ({r.UTS_MPa_AC50_median:.0f})",
+                     f"{r.YS_MPa_FC_median:.0f} → {r.YS_MPa_AC25_median:.0f}",
+                     f"{r.El_pct_FC_median:.0f} → {r.El_pct_AC25_median:.0f}",
+                     f"{r.HB_FC_median:.0f} → {r.HB_AC25_median:.0f}"])
+    body = (table(["Category", "grades", "furnace cooled", "air cooled, 25 mm", "UTS (50 mm)", "YS", "El %", "HB"], rows,
                   num_cols=(1,), col_widths=["18%", "6%", "13%", "17%", "15%", "11%", "9%", "11%"])
             + '<p class="tiny" style="margin-top:8px">Medians over the catalogue grades of each category; furnace cooling '
-              "0.005 K/s, air cooling of a 50 mm bar (the handbook's normalising condition), and of a 25 mm bar in brackets. "
+              "0.005 K/s, air cooling of a 25 mm bar (the handbook's documented normalising condition), and of a 50 mm bar in brackets. "
               "P: pearlite (lever split; the kinetic split is the top of a band), B+M: bainite + martensite. "
               "* outside the window of the critical-temperature equations (2 % Si): treat with caution.</p>")
     d.add(body, title="Q4, the answer: air cooling refines plain-carbon steels and changes alloy steels into a different steel",
@@ -292,17 +292,18 @@ def slides_closing(d, N):
           "<li><b>Training data are small and old:</b> 33 handbook grades, one typical value per grade and condition, at "
           "nominal compositions; the spread of compositions inside a grade's own range is already a large part of the "
           "error.</li>"
-          "<li><b>Inferred conditions:</b> the handbook does not state the bar size or the furnace rate; we calibrated "
-          "them with physics only.</li>"
-          "<li><b>Semi-empirical kinetics:</b> bainite start too high; the quasi-eutectoid excess of pearlite overstated; "
-          "the Acm fit and Grange's silicon terms are poor above 0.9 % C and 1 % Si.</li>"
+          "<li><b>One inferred condition left:</b> the furnace rate of the handbook's annealed bars (the bar size is now "
+          "documented); its effect is measured by retraining (stage 10).</li>"
+          "<li><b>Semi-empirical kinetics:</b> errors on independent data are structural; still too hardenable against "
+          "Grossmann's D<sub>I</sub>; the Acm fit and Grange's silicon terms are poor above 0.9 % C and 1 % Si.</li>"
           "<li><b>Estimated quantities:</b> uniform elongation (a ratio), ferrite grain size (about ×2), toughness (an "
           "indicator).</li></ul></div><div class='col small'><ul>"
           "<li><b>Domain shift:</b> modern thermomechanically rolled and microalloyed products are stronger than "
           "predicted until a few local tests are added.</li>"
           "<li><b>Design choices made on evaluation data</b> (descriptors, gates, silicon) are documented as ablations, "
           "so the cross-validation is not fully blind.</li>"
-          "<li><b>Not modelled:</b> tempering after normalising, precipitation strengthening, decarburisation, banding.</li>"
+          "<li><b>Estimated or out of scope:</b> precipitation (±50 %), Q+T Charpy, as-delivered TMCP, boron hardenability, "
+          "carburising, decarburisation, banding; a constant-h (Grossmann) quench.</li>"
           "<li><b>Nothing here replaces a tensile test;</b> the intervals say how much to trust a number.</li></ul></div></div>",
           title="Scope and limitations", kicker="Limitations")
 
@@ -310,13 +311,15 @@ def slides_closing(d, N):
     lo, hi, crmo = cat.loc["Low-carbon steel"], cat.loc["High-carbon steel"], cat.loc["Mo / Cr-Mo steel"]
     d.add('<div class="small"><ol style="padding-left:22px">'
           f"<li><b>Low-carbon steels:</b> furnace and air cooling give almost the same steel; air cooling only refines it "
-          f"(UTS {lo.UTS_MPa_FC_median:.0f} → {lo.UTS_MPa_AC50_median:.0f} MPa), which is why they are normalised for grain "
+          f"(UTS {lo.UTS_MPa_FC_median:.0f} → {lo.UTS_MPa_AC25_median:.0f} MPa), which is why they are normalised for grain "
           "refinement and uniformity, not for strength.</li>"
           f"<li><b>Medium- and high-carbon steels:</b> the same phases, much finer pearlite and finer ferrite; the gain grows "
-          f"with the pearlite share (high carbon: {hi.UTS_MPa_FC_median:.0f} → {hi.UTS_MPa_AC50_median:.0f} MPa).</li>"
+          f"with the pearlite share (high carbon: {hi.UTS_MPa_FC_median:.0f} → {hi.UTS_MPa_AC25_median:.0f} MPa).</li>"
           f"<li><b>Hardenable alloy steels:</b> air cooling gives bainite and, in thin bars, martensite: a different steel "
-          f"(Cr-Mo median {crmo.UTS_MPa_FC_median:.0f} → {crmo.UTS_MPa_AC50_median:.0f} MPa), so bar size and route must be "
+          f"(Cr-Mo median {crmo.UTS_MPa_FC_median:.0f} → {crmo.UTS_MPa_AC25_median:.0f} MPa), so bar size and route must be "
           "chosen together, and such steels are tempered afterwards.</li>"
+          "<li><b>The rest of the route:</b> hardening and tempering give each grade a range of strengths (Q+T UTS within "
+          "about 75 MPa on unseen grades); a stress relief below the tempering parameter changes nothing but the residual stress.</li>"
           "<li><b>Method:</b> physics carries the extrapolation (new cooling rates, martensite, consistent trends); machine "
           "learning corrects the textbook relations and gives honest intervals; every link is tested on data the models "
           "never saw.</li></ol>"
