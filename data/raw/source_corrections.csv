@@ -1,0 +1,12 @@
+source,grade,field,as_published,corrected,reason
+summit_alloy_h,1335H,Si,.15- 35,0.15-0.35,typographical: missing decimal point
+summit_alloy_h,4037H,C,.39-.41,0.34-0.41,SAE J1268 4037H carbon is 0.34-0.41; .39-.41 is narrower than any H-band
+summit_alloy_h,6150H,"Ni,Mo",.15-.45 / .08-.15,none,row shift: 61xx are Cr-V steels without Ni or Mo (SAE family table); values belong to 81B45H
+summit_alloy_h,81B45H,"Ni,Mo",blank,"Ni 0.15-0.45, Mo 0.08-0.15",row shift: 81xx family is Ni 0.30 / Cr 0.40 / Mo 0.12 (SAE family table)
+summit_alloy_h,51B60H,V,.10-.15V,none,row shift: 51Bxx are Cr-B steels without V; the V range belongs to 6118H
+summit_alloy_h,6118H,V,.15Min.V,0.10-0.15,row shift of the V annotations
+summit_alloy_h,6150H,V,blank,0.15-0.25 (0.15 min),row shift of the V annotations; 6150 is V 0.15 min
+summit_carbon,1117,Mn,1.30/1.60,1.00-1.30,Mn ranges of 1117 and 1118 swapped relative to SAE J403 (cross-checked with Zenodo 17704410)
+summit_carbon,1118,Mn,1.00/1.30,1.30-1.60,as above
+summit_carbon,"1212,1213,12L14",C,13 / 15,0.13 max / 0.15 max,missing decimal point
+summit_carbon,15821H,grade,15821H,15B21H,typographical: the boron 'B' printed as '8'; C 0.17-0.24 / Mn 0.70-1.20 are the SAE 15B21H ranges

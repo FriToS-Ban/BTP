@@ -1,0 +1,7 @@
+J,distance_mm,rate_as_printed,cooling_rate_C_per_s_at_700C,source
+5,7.94,55 degF/s,30.556,"Metallus (2024) Practical Data for Metallurgists, p.68: cooling-rate scale of the ASM combined hardenability charts (temperature not printed; ASM charts use about 1300 F / 704 C)"
+10,15.88,25 degF/s,13.889,"Metallus (2024) Practical Data for Metallurgists, p.68: cooling-rate scale of the ASM combined hardenability charts (temperature not printed; ASM charts use about 1300 F / 704 C)"
+15,23.81,12 degF/s,6.667,"Metallus (2024) Practical Data for Metallurgists, p.68: cooling-rate scale of the ASM combined hardenability charts (temperature not printed; ASM charts use about 1300 F / 704 C)"
+20,31.75,7 degF/s,3.889,"Metallus (2024) Practical Data for Metallurgists, p.68: cooling-rate scale of the ASM combined hardenability charts (temperature not printed; ASM charts use about 1300 F / 704 C)"
+27,42.86,290 degF/min,2.685,"Metallus (2024) Practical Data for Metallurgists, p.68: cooling-rate scale of the ASM combined hardenability charts (temperature not printed; ASM charts use about 1300 F / 704 C)"
+48,76.2,200 degF/min,1.852,"Metallus (2024) Practical Data for Metallurgists, p.68: cooling-rate scale of the ASM combined hardenability charts (temperature not printed; ASM charts use about 1300 F / 704 C)"

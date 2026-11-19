@@ -1,0 +1,43 @@
+group,designation,description
+Carbon steels,10xx,Plain carbon (Mn 1.00% max.)
+Carbon steels,11xx,Resulfurized
+Carbon steels,12xx,Resulfurized and rephosphorized
+Carbon steels,15xx,Plain Carbon (Mn 1.00–1.65% max.)
+Carbon steels,15Bxx,"Plain Carbon with Boron (Mn 1.00–1.65% max., B 0.0005-0.003% max.)"
+Manganese steels,13xx,Mn 1.75%
+Nickel steels,23xx,Ni 3.50%
+Nickel steels,25xx,Ni 5.00%
+Nickel-chromium steels,31xx,"Ni 1.25%; Cr 0.65%, or 0.80%"
+Nickel-chromium steels,32xx,Ni 1.75%; Cr 1.07%
+Nickel-chromium steels,33xx,"Ni 3.50%; Cr 1.50%, or 1.57%"
+Nickel-chromium steels,34xx,Ni 3.00%; Cr 0.77%
+Molybdenum steels,40xx,"Mo 0.20%, 0.25%, or Mo 0.25% and S 0.042% [ 1 ]"
+Molybdenum steels,44xx,"Mo 0.40%, or 0.52%"
+Chromium-molybdenum (chromoly) steels,41xx,"Cr 0.50%, 0.80%, or 0.95%; Mo 0.12%, 0.20%, 0.25%, or 0.30%"
+Nickel-chromium-molybdenum steels,43xx,Ni 1.82%; Cr 0.50–0.80%; Mo 0.25%
+Nickel-chromium-molybdenum steels,43BVxx,"Ni 1.82%; Cr 0.50%; Mo 0.12%, or 0.35%; V 0.03% min"
+Nickel-chromium-molybdenum steels,47xx,"Ni 1.05%; Cr 0.45%; Mo 0.20%, or 0.35%"
+Nickel-chromium-molybdenum steels,81xx,Ni 0.30%; Cr 0.40%; Mo 0.12%
+Nickel-chromium-molybdenum steels,81Bxx,Ni 0.30%; Cr 0.45%; Mo 0.12%; and added boron [ 1 ]
+Nickel-chromium-molybdenum steels,86xx,Ni 0.55%; Cr 0.50%; Mo 0.20%
+Nickel-chromium-molybdenum steels,87xx,Ni 0.55%; Cr 0.50%; Mo 0.25%
+Nickel-chromium-molybdenum steels,88xx,Ni 0.55%; Cr 0.50%; Mo 0.35%
+Nickel-chromium-molybdenum steels,93xx,Ni 3.25%; Cr 1.20%; Mo 0.12%
+Nickel-chromium-molybdenum steels,94xx,Ni 0.45%; Cr 0.40%; Mo 0.12%
+Nickel-chromium-molybdenum steels,97xx,Ni 0.55%; Cr 0.20%; Mo 0.20%
+Nickel-chromium-molybdenum steels,98xx,Ni 1.00%; Cr 0.80%; Mo 0.25%
+Nickel-molybdenum steels,46xx,"Ni 0.85%, or 1.82%; Mo 0.20%, or 0.25%"
+Nickel-molybdenum steels,48xx,Ni 3.50%; Mo 0.25%
+Chromium steels,50xx,"Cr 0.27%, 0.40%, 0.50%, or 0.65%"
+Chromium steels,50xxx,Cr 0.50%; C 1.00% min
+Chromium steels,50Bxx,"Cr 0.28%, or 0.50%; and added boron [ 1 ]"
+Chromium steels,51xx,"Cr 0.80%, 0.87%, 0.92%, 1.00%, or 1.05%"
+Chromium steels,51xxx,Cr 1.02%; C 1.00% min.
+Chromium steels,51Bxx,Cr 0.80%; and added boron [ 1 ]
+Chromium steels,52xxx,Cr 1.45%; C 1.00% min.
+Chromium-vanadium steels,61xx,"Cr 0.60%, 0.80%, 0.95%; V 0.10%, or 0.15% min."
+Tungsten-chromium steels,72xx,W 1.75%; Cr 0.75%
+Silicon-manganese steels,92xx,"Si 1.40%, or 2.00%; Mn 0.65%, 0.82%, or 0.85%; Cr 0.00%, or 0.65%"
+High-strength low-alloy steels,9xx,Various SAE grades
+High-strength low-alloy steels,xxBxx,Boron steels
+High-strength low-alloy steels,xxLxx,Leaded steels
