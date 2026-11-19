@@ -1,0 +1,16 @@
+assumption,value,status,evidence,range_tested,used_in
+Bar size of the handbook normalised rows,25 mm (1 in.) round,documented,same values as the 25 mm rows of Birbilis et al. 2025 (21 of 28 grades within 3 MPa),"13, 25, 50 mm",property models (stage 4)
+Furnace cooling rate of the handbook annealed rows,0.005 K/s at 700 C (18 K/h),inferred,usual full-annealing practice (10-50 K/h); physics-only error flat below 0.01 K/s,0.002-0.02 K/s,property models (stage 4)
+Austenitising temperatures of handbook / Birbilis rows,as stated in the sources,documented,"given for 100 % of handbook rows, 72 % of normalised and 91 % of Q+T bars",-,all stages
+Default austenitising rules (anneal / normalise / harden),Ae3+50 / upper+110 (>=870) / Ae3+70 C,fitted,MAE 14 / 15 / 16 C against the handbook and Birbilis practice,-,predictor defaults
+Still-air heat transfer,"laminar natural convection + radiation, emissivity 0.8",literature,agrees with measured 25 and 45-50 mm bar cooling rates (stage 3),emissivity 0.6-0.9; convection x0.7-1.3,normalising paths
+Prior-austenite grain size,"ASTM 8 at 850 C, one number coarser per 100 C",assumed,fine-grained Al-killed practice (ASTM E112 charts),-1 to +1 ASTM number,"kinetics, Hall-Petch"
+Quench severity,"Grossmann H, middle of the 'mild agitation' class",literature,"Grossmann et al. 1939 table; oil 0.30-0.35, water 1.0-1.1 per inch",low and high end of the class,hardening paths
+Conductivity used to turn H into h,30 W/m/K,assumed,hot austenite 25-35 W/m/K (EN 1993-1-2),25-40 W/m/K,hardening paths
+Specific heat during a quench,Eurocode polynomial capped at 650 J/kg/K (no 735 C peak),assumed,the peak is the heat of slow transformation; with it an oil-quenched surface came out softer than the centre,Eurocode with peak,hardening paths
+Tensile specimen position,"centre up to 38 mm, mid-radius above (ASTM A370)",documented standard,ASTM A370 bar products,centre for every bar,Q+T models
+Tempering time when not given,1 h,assumed,time is not stated in the Birbilis rows,0.5 and 2 h,Q+T models
+Hollomon-Jaffe constant,C = 20,literature,Hollomon & Jaffe 1945,18 and 22,"Q+T, stress relief"
+Kinetic constants (bainite),"Bs - 107 C, rate x 79",fitted (Bayesian),"SAE H-bands, cross-validated by grade (stage 8)",published Li constants,all transformation paths
+Precipitation particle size,"8 nm air cooled, 30 nm furnace cooled",assumed,interphase vs coarsened carbonitrides (Gladman 1997),+/-50 % on the strengthening,microalloyed steels
+Uniform / total elongation,0.508 +/- 0.051,fitted,"10 tests, 4 sources (stage 6)",its SD,uniform elongation estimate

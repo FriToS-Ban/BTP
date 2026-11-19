@@ -1,0 +1,28 @@
+grade,state,quantity,q05,q50,q95
+1045,furnace cooled,f_bainite,0.0,0.0,0.0
+1045,furnace cooled,f_martensite,0.0,0.0,0.0
+1045,furnace cooled,f_ferrite_pearlite,1.0,1.0,1.0
+1045,air cooled 25 mm,f_bainite,0.0,0.0,0.0
+1045,air cooled 25 mm,f_martensite,0.0,0.0,0.0
+1045,air cooled 25 mm,f_ferrite_pearlite,1.0,1.0,1.0
+1045,"oil quenched 50 mm, mid-radius",f_bainite,0.0,0.0,0.0
+1045,"oil quenched 50 mm, mid-radius",f_martensite,0.0,0.0,0.0
+1045,"oil quenched 50 mm, mid-radius",f_ferrite_pearlite,1.0,1.0,1.0
+4140,furnace cooled,f_bainite,0.0,0.0,0.0
+4140,furnace cooled,f_martensite,0.0,0.0,0.0
+4140,furnace cooled,f_ferrite_pearlite,1.0,1.0,1.0
+4140,air cooled 25 mm,f_bainite,0.9421823618413591,0.9536198367113855,0.9600570683887693
+4140,air cooled 25 mm,f_martensite,0.0,0.0,0.0
+4140,air cooled 25 mm,f_ferrite_pearlite,0.03994293161123079,0.046380163288614454,0.057817638158640855
+4140,"oil quenched 50 mm, mid-radius",f_bainite,0.5310933837625738,0.5638702844128847,0.6008477939425715
+4140,"oil quenched 50 mm, mid-radius",f_martensite,0.38373494371510686,0.4192841961625746,0.45079508833685733
+4140,"oil quenched 50 mm, mid-radius",f_ferrite_pearlite,0.0,0.0,0.0
+4340,furnace cooled,f_bainite,0.0,0.0,0.0
+4340,furnace cooled,f_martensite,0.0,0.0,0.0
+4340,furnace cooled,f_ferrite_pearlite,1.0,1.0,1.0
+4340,air cooled 25 mm,f_bainite,1.0,1.0,1.0
+4340,air cooled 25 mm,f_martensite,0.0,0.0,0.0
+4340,air cooled 25 mm,f_ferrite_pearlite,0.0,0.0,0.0
+4340,"oil quenched 50 mm, mid-radius",f_bainite,0.0769399318706197,0.08243311053863325,0.08890547161232246
+4340,"oil quenched 50 mm, mid-radius",f_martensite,0.8664651810270684,0.8726204978845968,0.8778445969222866
+4340,"oil quenched 50 mm, mid-radius",f_ferrite_pearlite,0.0,0.0,0.0
