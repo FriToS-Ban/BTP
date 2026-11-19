@@ -1,150 +1,146 @@
-# Machine-Learning Prediction of Mechanical Properties of Steels from Composition, with Inverse Alloy Design
+# Furnace cooling vs air cooling of steels: microstructure and tensile properties with physics-informed ML
 
-**B.Tech Project (MTP-400A), Department of Metallurgical and Materials Engineering, Indian Institute of Technology Roorkee**
-
-**Authors:** Aviral Singh, Shibasish Banerjee
-**Supervisor:** Dr. Anish Karmakar
+**B.Tech Project (MTP-400A), Department of Metallurgical and Materials Engineering, IIT Roorkee**
+**Authors:** Aviral Singh, Shibasish Banerjee  |  **Supervisor:** Dr. Anish Karmakar
 
 ---
 
-## Overview
+## What this project does
 
-Yield strength in structural steels depends on both chemical composition and thermo-mechanical processing. This project asks how much of that strength can be predicted from composition alone, what a model learns when it does so, and whether such a model can responsibly propose new compositions.
+Give it the composition of a steel, and it tells you what kind of steel it is, what microstructure forms
+when it is **furnace cooled** (full annealing) and when it is **air cooled** (normalising), and what yield
+strength, tensile strength, uniform and total elongation and hardness to expect, each with a 90 % interval.
+It also says why the two routes differ, and it refuses to guess for steels it has never seen anything like.
 
-The pipeline has four parts:
+We built it as a chain that follows the metallurgy, with machine learning used where physics alone is not
+good enough and physics kept where data alone cannot be trusted:
 
-1. **Forward prediction.** Predict yield strength (MPa) from 14 elemental weight percents, using linear baselines, Random Forest, XGBoost, a neural network, and a Gaussian process.
-2. **Leakage-aware evaluation.** Group near-duplicate alloys into clusters and evaluate with 5×5 repeated grouped cross-validation, nested hyperparameter tuning, and Nadeau-Bengio corrected paired tests.
-3. **Interpretation.** Attribute predictions with SHAP and compare the attributions with expectations from physical metallurgy, under a predeclared consensus rule.
-4. **Inverse design.** Search locally around training alloys for compositions with a high lower confidence bound on strength, and map the trade-off against a criticality index built from EU 2023 supply-risk weights.
+```
+composition ─► ML classifier ─► category  (low/medium/high C, free-machining, C-Mn, Cr, Cr-Mo, Ni-Cr-Mo,
+     │                                     Si-Mn, stainless, tool, or "unknown")
+     ├─► thermodynamics ─► Ae1, Ae3, Acm, eutectoid carbon, lever rule
+cooling route ─► heat balance ─► cooling path (furnace, or a bar of diameter D in still air)
+     └─► transformation kinetics (Li et al. 1998) ─► ferrite, pearlite, bainite, martensite,
+                                                     pearlite spacing, ferrite grain size
+                                     │
+          physics-anchored Gaussian-process models + conformal intervals
+                                     │
+          YS, UTS, total and uniform elongation, hardness  ─►  what-if, inverse design,
+                                                               active learning, lab plan
+```
 
-## Key Results
+## Why it was rebuilt
 
-Values are the mean ± standard deviation across 25 outer folds of repeated grouped cross-validation.
+The first version of this project predicted the yield strength of 312 maraging-type steels from
+composition alone. Our supervisor pointed out that this does not make physical sense, because strength
+depends on the heat treatment and that data had none. The new project is built around the heat treatment
+itself. The old work is kept in git history under the tag `legacy-composition-only-v1`.
 
-| Model | RMSE (MPa) | MAE (MPa) | R² |
-|:---|:---:|:---:|:---:|
-| Default Random Forest | 158.3 ± 26.3 | 118.6 ± 22.4 | 0.684 ± 0.119 |
-| Tuned Random Forest | 159.6 ± 28.5 | 119.7 ± 22.8 | 0.686 ± 0.104 |
-| Tuned XGBoost | 160.9 ± 31.8 | 120.8 ± 25.3 | 0.676 ± 0.126 |
-| Default XGBoost | 162.6 ± 30.6 | 122.9 ± 24.0 | 0.669 ± 0.124 |
-| PyTorch MLP | 173.8 ± 39.8 | 123.1 ± 27.5 | 0.619 ± 0.168 |
-| Gaussian Process (ARD Matérn) | 183.0 ± 43.8 | 124.1 ± 24.9 | 0.590 ± 0.149 |
-| Ridge (13 non-Fe features) | 239.2 ± 45.1 | 173.0 ± 36.2 | 0.320 ± 0.161 |
-| Dummy (mean) | 300.3 ± 49.9 | 232.0 ± 31.0 | −0.059 ± 0.055 |
+## Key results
 
-- **Grouping changes the result.** Naive repeated cross-validation gives a Random Forest RMSE of 142.8 MPa and R² of 0.764, because near-duplicate alloys appear on both sides of the split. The grouped protocol gives 158.3 MPa and 0.684.
-- **No model difference survives the corrected test.** Tuning did not beat the default Random Forest (corrected p = 0.837). The MLP and Gaussian process differences are significant on a plain paired test and not after the Nadeau-Bengio correction.
-- **Attributions are stable, and mechanisms remain open.** Titanium has the largest mean absolute SHAP value (about 119 MPa on the default forest). Only aluminium and cobalt receive a "consistent" label under the consensus rule, because the models disagree on titanium and nickel. Rankings agree with permutation importance (Spearman 0.97).
-- **The inverse search did not beat the training data.** Its best candidate has an in-sample lower confidence bound of 1665 MPa, against 2408 MPa for the best training alloy, and the two random seeds do not converge on one region. The Pareto front reaches 2212 MPa at low criticality, which is also below the best training alloys.
-- **Carbon equivalent was audited and not optimized.** The published CET validity window contains 0 of the 312 alloys, so the formula is not a suitable objective for this dataset.
+Every number is in `results/` and explained in `reports/REPORT.md` (generated from the results, so the two
+cannot disagree). "Unseen" means leave-one-grade-out: the grade being predicted was never in training.
 
-## Limitations
+| Question | What we found |
+|---|---|
+| Which steel is it? | 13 categories; 0.94 family accuracy on 1358 real heats, against 0.92 for the AISI/SAE composition rules; all 312 maraging steels of the old project refused as "unknown" |
+| Which microstructure forms? | ferrite start within 16 °C and Ms within 7 °C of measured dilatometry; 423 points of an open CCT atlas: ferrite + pearlite within 0.12, bainite 0.16 (fraction MAE) |
+| Is the kinetics right for hardenable steels? | against the SAE Jominy bands of 80 grades the published Li model was too hardenable (+12 HRC far from the quenched end); a Bayesian recalibration of the bainite reaction cut the band error from 10.1 to 5.9 HRC on unseen grades and moved the bainite start onto independent dilatometry |
+| Which properties? | unseen grades: UTS 53 MPa, YS 42 MPa, hardness 14 HB (RMSE), against 82, 82 and 19 for the textbook relations alone; 90 % intervals cover 92.5 % |
+| Furnace vs air cooling | low-carbon: same steel, only refined (+30 MPa UTS); medium/high carbon: same phases, finer pearlite and ferrite (+80 to +270 MPa); Cr-Mo and Ni-Cr-Mo: partly bainitic in air-cooled bars, so bar size matters as much as the route |
+| Why stronger on air cooling? | almost all of it is the faster cooling, not the hotter austenitisation; normalising also lowers the impact transition temperature by about 30 °C |
 
-- **Composition only.** The dataset has no processing variables, so the model cannot separate chemistry from unrecorded heat treatment. Residual scatter of about 150 MPa includes that missing information.
-- **High-strength domain.** Every alloy is above 1000 MPa. The model does not apply to ordinary mild steels.
-- **Attribution is not causation.** SHAP explains the model. Statements about mechanisms are hypotheses and are worded as "consistent with".
-- **Inverse-design scores are in-sample.** The screening model is fit on all 312 alloys, and tree disagreement is not a calibrated probability. Candidates are not recommendations to melt an alloy.
-- **The applicability-domain link is exploratory.** The cluster-level near-versus-far gap in MAE is large (85.5 versus 151.6 MPa), but the distance metric was chosen after inspecting results and the continuous rank correlation is not significant (ρ = 0.086, p = 0.225).
-- **No external validation yet.** All reported errors come from cross-validation on this dataset.
+What we learned the hard way is kept as ablations in `results/`: silicon as an ML input (looked better in
+cross-validation, behaved unphysically), the physics anchor (a composition-only hardness anchor could not see
+pearlite refinement), and calibrations that fit one dataset but must be checked on the others.
 
-## Dataset
+## Quick start
 
-- **Source:** Matbench v0.1 `matbench_steels` (Dunn et al., 2020), derived from a Citrine Informatics dataset of steel mechanical properties.
-- **Size:** 312 compositions.
-- **Features:** Chemical formulas parsed with `pymatgen` into weight percents of 14 elements (Al, C, Co, Cr, Fe, Mn, Mo, N, Nb, Ni, Si, Ti, V, W). Iron is the balance, so most models use the 13 non-iron features.
-- **Target:** Yield strength, 1005.9 to 2510.3 MPa.
+```bash
+make setup        # virtual environment + requirements (Python 3.10+, tested on 3.13)
+make pipeline     # stages 1-8, about 15 minutes; writes results/ and figures/
+make notebooks    # 8 executed presentation notebooks
+make test         # physics, data and model tests
+make app          # interactive tool: http://127.0.0.1:7860
+make report       # report, slide deck and journal-style manuscript (reports/paper/manuscript.pdf)
+```
 
-## Repository Structure
+`data/raw/` is committed, so the pipeline runs offline. `make fetch` re-downloads every source and
+re-parses it, and records checksums in `data/raw/source_manifest.csv`.
+
+Using the model from Python:
+
+```python
+import sys; sys.path.insert(0, "src")
+from steelml.predictor import SteelPredictor
+
+sp = SteelPredictor.load()
+out = sp.what_if({"C": 0.45, "Mn": 0.75, "Si": 0.25}, section_mm=25)   # furnace vs air cooling
+print(out[["route", "F_best", "P_best", "B_best", "M_best",
+           "YS_MPa_pred", "UTS_MPa_pred", "El_pct_pred", "uniform_El_est_pct", "HB_pred"]])
+```
+
+## Repository structure
 
 ```
 BTP/
-├── data/                  Processed composition and target tables (CSV)
-├── figures/               Figures 1 to 25 (PNG)
-├── notebooks/             Executed notebooks that present each stage
-├── results/               Metrics, audits, candidates, and the screening model
-├── src/
-│   ├── btp_common.py                Shared data loading and helpers
-│   ├── applicability_domain.py      Applicability-domain rule
-│   ├── stage1_data_eda.py           Data parsing and exploratory analysis
-│   ├── stage2_baselines.py          Baselines and grouped cross-validation
-│   ├── stage2_addendum_audit.py     Cluster-level applicability-domain audit
-│   ├── stage3_complete_audited.py   Nested tuning and audits (authoritative Stage 3)
-│   ├── stage4_shap.py               SHAP interpretation
-│   ├── stage5_inverse_design.py     Local inverse design with uncertainty
-│   ├── stage6_pareto.py             Two-objective Pareto front
-│   ├── stage7_screen_alloy.py       Command-line screening of one composition
-│   ├── stage3_tuning.py             Superseded by stage3_complete_audited.py
-│   ├── update_fig9.py               Redraws Figure 9 from the cluster-level audit
-│   ├── create_notebooks.py          Generates notebooks 01 and 02
-│   ├── create_stage_notebooks.py    Generates notebooks 04 to 06
-│   └── audit_repo_terms.py          Checks wording in the repository
-├── README.md
-└── requirements.txt
+├── src/steelml/             the package
+│   ├── physics/             thermo (Ae1/Ae3/Acm, lever rule), cooling (heat balance),
+│   │                        kinetics (Li et al., numba), microstructure, structure-property relations
+│   ├── data/                source registry, parsers, catalogue, dataset assembly
+│   ├── models/              classifier, property models, domain, evaluation, consistency tests
+│   ├── features.py          composition + route -> physics descriptors
+│   ├── predictor.py         end-to-end predictor with conformal intervals
+│   └── categories.py        steel category taxonomy
+├── pipeline/                s00 fetch ... s08 hardenability; run_all.py runs everything
+├── app/app.py               Gradio what-if tool
+├── notebooks/               01-08 executed notebooks (+ make_notebooks.py)
+├── data/                    raw (committed source tables), processed, README.md (data card)
+├── results/                 every table behind every number, and the trained models
+├── figures/                 fig01-fig30, and CC BY micrographs
+├── reports/                 REPORT.md (generated), the slide deck (PDF and PPTX) and its sources
+└── tests/                   pytest suite
 ```
-
-## Setup
-
-Python 3.10 or later is required.
-
-```bash
-pip install -r requirements.txt
-```
-
-## Reproducing the Stages
-
-Run each stage from the repository root.
-
-```bash
-python src/stage1_data_eda.py
-python src/stage2_baselines.py
-python src/stage3_complete_audited.py
-python src/stage4_shap.py
-python src/stage5_inverse_design.py
-python src/stage6_pareto.py
-```
-
-Do not run `src/stage3_tuning.py` over the audited tables.
-
-To screen a composition with the saved model:
-
-```bash
-python src/stage7_screen_alloy.py --example training-strongest
-python src/stage7_screen_alloy.py --example mild-steel
-python src/stage7_screen_alloy.py --wt Al=0.1,C=0.03,Ni=18,Co=8,Mo=5,Ti=0.4
-```
-
-The mild-steel example is reported as outside the applicability domain. The value printed for it is what the model returns, and it is not a yield-strength estimate.
-
-A composition is also reported as outside the domain if any element falls outside its training range. Every training alloy lists small amounts of Al, Co, Cr, Mn, Mo, Ni, and Si, so leaving one of those out of `--wt` sets it to zero and triggers the flag, as in the last example above.
 
 ## Notebooks
 
-| Notebook | Contents |
-|:---|:---|
-| [`01_data_and_eda`](notebooks/01_data_and_eda.ipynb) | Composition parsing, target distribution, correlations |
-| [`02_baselines_and_evaluation`](notebooks/02_baselines_and_evaluation.ipynb) | Leakage gap, baselines, applicability-domain audit |
-| [`03_tuning_and_residual_audit`](notebooks/03_tuning_and_residual_audit.ipynb) | Model comparison, corrected tests, sanity checks, outliers, alloy families |
-| [`04_shap_interpretation`](notebooks/04_shap_interpretation.ipynb) | SHAP tables and figures |
-| [`05_inverse_design`](notebooks/05_inverse_design.ipynb) | Inverse-design audit and candidates |
-| [`06_pareto_front`](notebooks/06_pareto_front.ipynb) | Pareto front and carbon-equivalent validity |
+| Notebook | What it shows |
+|---|---|
+| `01_data_overview` | the open data, and what furnace vs air cooling does to 33 measured grades |
+| `02_steel_categories` | category classifier, tests on real heats, SHAP, unknown-steel detection |
+| `03_microstructure` | transformation model, validation against dilatometry and literature, CCT diagrams |
+| `04_property_models` | the model ladder, paired tests, conformal intervals, cooling-rate extrapolation |
+| `05_furnace_vs_air` | category-by-category answer, carbon sweep, section-size effect, a live example |
+| `06_external_validation` | structural members, second-source and literature checks |
+| `07_design_and_active_learning` | grade + route recommendations, strength-ductility front of real grades, active learning, recalibration, lab plan |
+| `08_hardenability` | ideal critical diameter, Jominy H-bands, Bayesian kinetics calibration and its transfer test |
 
-The notebooks read saved results and do not fit models.
+## Limitations
 
-## Reading the Results
+The full list is in `reports/REPORT.md`, section 7. The main ones:
 
-- **Two error summaries are used.** Tables report the mean across 25 outer folds. Figures 6 and 10 annotate each panel with the error of per-alloy predictions averaged across repeats, which is slightly lower (for example, 156.3 MPa against 158.3 MPa for the default Random Forest).
-- **Audited tables replace earlier ones.** Use `stage3_paired_comparisons_nadeau_bengio.csv`, `stage3_family_errors_audited.csv`, and `stage3_worst_alloys_hedged.csv`. The files with the same stem and no suffix are earlier versions kept for traceability.
-- **Library versions are not pinned.** Exact values can shift slightly between environments. A Stage 4 rerun of the 14-feature default forest gave 160.3 MPa against the archived 158.3 MPa, which is well inside the fold standard deviation of about 27 MPa.
-- **Tested environment.** The notebooks and the screening script were last run on Python 3.13 with scikit-learn 1.7, pandas 2.3, and optuna 5.0.
+* The property models learn from 33 grades with one typical value per grade and condition (ASM/Bethlehem),
+  at nominal compositions, so the 90 % intervals are wide (about +/-95 MPa for strength).
+* The cooling conditions of the handbook bars are inferred (a 50 mm bar in still air for normalising,
+  0.005 K/s for annealing), and the default austenitising temperatures follow the handbook practice.
+* The kinetic model is semi-empirical: transformation temperatures are good, air-cooled pearlite fractions
+  need the lever-rule correction, and spacings and grain sizes are good to a factor of about 2.
+* Uniform elongation is estimated as 0.51 x total elongation on the handbook gauge (10 literature tests), not measured.
+* Modern thermomechanically rolled or microalloyed products are stronger than predicted until a few local
+  tests are added. Tempering, precipitation strengthening and toughness are not modelled.
+* Only carbon and low-alloy steels that form ferrite + pearlite on slow cooling are in scope; stainless,
+  tool and maraging steels are recognised and turned away.
 
-## References
+## Data and licences
 
-1. A. Dunn, Q. Wang, A. Ganose, D. Dopp, A. Jain. Benchmarking materials property prediction methods: the Matbench test set and Automatminer reference algorithm. *npj Computational Materials* 6, 138 (2020).
-2. C. Nadeau, Y. Bengio. Inference for the generalization error. *Machine Learning* 52, 239–281 (2003).
-3. S. M. Lundberg et al. From local explanations to global understanding with explainable AI for trees. *Nature Machine Intelligence* 2, 56–67 (2020).
-4. K. Aas, M. Jullum, A. Løland. Explaining individual predictions when features are dependent. *Artificial Intelligence* 298, 103502 (2021).
-5. S. Floreen. The physical metallurgy of maraging steels. *Metallurgical Reviews* 13, 115–128 (1968).
-6. W. Sha, A. Cerezo, G. D. W. Smith. Phase chemistry and precipitation reactions in maraging steels: Part III. Model alloys. *Metallurgical Transactions A* 24, 1241–1249 (1993).
-7. K. Deb, A. Pratap, S. Agarwal, T. Meyarivan. A fast and elitist multiobjective genetic algorithm: NSGA-II. *IEEE Transactions on Evolutionary Computation* 6, 182–197 (2002).
-8. European Commission. *Study on the Critical Raw Materials for the EU 2023*.
+See `data/README.md`. In short: ASM/Bethlehem handbook values (factual data, reproduced by Engineers
+Edge), SAE composition ranges (Summit Steel, Wikipedia), and CC BY datasets from Zenodo (Collins et al.
+2023; Kingsley et al. 2026; SteelBench; Carbon and Stainless Steel Grades), plus 215 measured values
+transcribed from 52 open-access papers (`data/raw/literature_sources.md`).
+
+## Main references
+
+Li et al. (1998) *Metall. Mater. Trans. B* 29, 661; Kirkaldy and Venugopalan (1984); Collins et al.
+(2023) *Metals* 13, 1168; Gladman, McIvor and Pickering (1972) *JISI* 210, 916; Pickering (1978);
+Maynier, Jungmann and Dollet (1978); Lei et al. (2018) *JASA* 113, 1094. The full list is in
+`reports/REPORT.md`.
