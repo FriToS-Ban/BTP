@@ -15,7 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import build_poster  # noqa: E402
 
-MIN = {"title": 80, "heading": 48, "body": 28, "caption": 20, "table": 24}
+MIN = {"title": 40, "heading": 28, "body": 20, "caption": 15, "table": 15}   # reference-poster scale
 
 
 def role(name, size):
@@ -23,11 +23,11 @@ def role(name, size):
         return "title" if size >= 60 else "header lines"
     if name.startswith("heading"):
         return "heading"
-    if name.startswith(("caption", "references", "acknowledgements")):
+    if name.startswith(("caption", "takeaway", "references", "acknowledgements")):
         return "caption"
-    if name.startswith(("data tile", "GA ", "eq label", "equation")):
+    if name.startswith(("data tile", "key result", "GA ", "eq label", "equation", "command")):
         return "table"
-    if name.startswith(("footer", "subheading", "takeaway")):
+    if name.startswith(("footer", "subheading")):
         return "body"
     return "body"
 
