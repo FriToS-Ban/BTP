@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 632" font-family="Times New Roman, Times, serif" font-size="15.5">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#000"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#000" stroke-width="1.1">
+    <rect x="10" y="8" width="620" height="52" rx="2"/>
+    <rect x="10" y="94" width="190" height="54" rx="2"/>
+    <rect x="232" y="94" width="398" height="54" rx="2"/>
+    <rect x="232" y="174" width="398" height="54" rx="2"/>
+    <rect x="232" y="254" width="398" height="54" rx="2"/>
+    <rect x="232" y="334" width="398" height="54" rx="2"/>
+    <rect x="232" y="414" width="398" height="54" rx="2"/>
+    <rect x="232" y="494" width="398" height="54" rx="2"/>
+    <rect x="10" y="574" width="620" height="54" rx="2"/>
+  </g>
+  <g stroke="#000" stroke-width="1.1" marker-end="url(#ah)">
+    <line x1="105" y1="60" x2="105" y2="93"/>
+    <line x1="431" y1="60" x2="431" y2="93"/>
+    <line x1="431" y1="148" x2="431" y2="173"/>
+    <line x1="431" y1="228" x2="431" y2="253"/>
+    <line x1="431" y1="308" x2="431" y2="333"/>
+    <line x1="431" y1="388" x2="431" y2="413"/>
+    <line x1="431" y1="468" x2="431" y2="493"/>
+    <line x1="431" y1="548" x2="431" y2="573"/>
+    <line x1="105" y1="148" x2="105" y2="573"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="320" y="30" font-weight="bold">Inputs</text>
+    <text x="320" y="51">composition, heat treatment with its temperatures and times, bar diameter, quench</text>
+    <text x="105" y="116" font-weight="bold">Steel category</text>
+    <text x="105" y="137">and domain check</text>
+    <text x="431" y="116" font-weight="bold">Thermodynamics</text>
+    <text x="431" y="137">critical temperatures, martensite and bainite start</text>
+    <text x="431" y="196" font-weight="bold">Heat flow</text>
+    <text x="431" y="217">furnace, still air, liquid quench or Jominy bar</text>
+    <text x="431" y="276" font-weight="bold">Transformation kinetics with additivity</text>
+    <text x="431" y="297">ferrite, pearlite, bainite and martensite</text>
+    <text x="431" y="356" font-weight="bold">Microstructure</text>
+    <text x="431" y="377">phase fractions, pearlite spacing, ferrite grain size</text>
+    <text x="431" y="436" font-weight="bold">Tempering and stress relief</text>
+    <text x="431" y="457">Hollomon–Jaffe parameter and its additivity</text>
+    <text x="431" y="516" font-weight="bold">Physics strength and hardness</text>
+    <text x="431" y="537">Gladman, Maynier and precipitation strengthening</text>
+    <text x="320" y="596" font-weight="bold">Physics-anchored Gaussian-process ensemble, 90% intervals</text>
+    <text x="320" y="617">strength, elongation, hardness, transition temperature and warning flags</text>
+  </g>
+  <g font-size="14" font-style="italic" text-anchor="middle">
+    <text x="105" y="330" transform="rotate(-90 105 330)" dy="-6">category, novelty and composition flags</text>
+  </g>
+</svg>

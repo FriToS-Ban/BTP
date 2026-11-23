@@ -1,0 +1,117 @@
+<h1 id="ch:lit">Literature Review</h1>
+
+<h2 id="sec:fec">The Iron–Carbon System and Critical Temperatures</h2>
+
+<p>Every heat treatment of a steel is planned around a few critical temperatures. In the iron–carbon system austenite
+is stable above the upper critical temperature Ae<sub>3</sub>, which falls from 912 °C for pure iron to the eutectoid
+temperature of about 727 °C at about 0.76% C, and below the lower critical temperature Ae<sub>1</sub> it gives way to
+ferrite and cementite <c k="callister2018,krauss2015"/>. Above the eutectoid composition the upper limit is the
+cementite solvus, Ae<sub>cm</sub>. Alloying elements move all of these temperatures. Manganese and nickel lower them,
+while silicon, chromium and molybdenum generally raise the lower critical temperature. For engineering use the
+critical temperatures are usually estimated with empirical equations, such as those of Grange <c k="grange1961"/> and
+Andrews <c k="andrews1965"/>, and the martensite start temperature M<sub>s</sub> with relations such as that of Steven
+and Haynes <c k="steven1956"/>. Just below the eutectoid temperature, the lever rule gives the equilibrium amounts of
+proeutectoid ferrite and pearlite.</p>
+
+<h2 id="sec:annnorm">Annealing and Normalising</h2>
+
+<p>In full annealing a hypoeutectoid steel is austenitised a little above Ac<sub>3</sub> and cooled with the furnace,
+typically at 10 to 30 °C per hour through the transformation range. In normalising it is austenitised about 50 to
+100 °C above the upper critical temperature and cooled in still air <c k="asm4,krauss2015"/>. The 2 routes therefore
+differ in 2 ways at once, in the austenitising temperature and in the cooling rate, and the second one matters most.
+Air cooling makes the austenite transform at a larger undercooling, so the pearlite is finer, with an interlamellar
+spacing that falls roughly as the inverse of the undercooling <c k="zener1946"/>, and finer pearlite is stronger
+<c k="marder1976"/>. The ferrite grains become smaller as well. In hypoeutectoid steels faster cooling can also take
+the austenite into the extrapolated region below Ae<sub>1</sub> before all the equilibrium ferrite has formed, which
+gives more pearlite than the lever rule predicts <c k="hultgren1947"/>.</p>
+
+<p>Hardenability changes this picture for alloy steels. In a steel with enough chromium, molybdenum or nickel, the
+ferrite and pearlite reactions are delayed so much that bainite or even martensite forms in an air-cooled bar, so
+normalising such a steel gives a different kind of microstructure altogether. A thicker bar also cools more slowly in
+air, so the same steel normalised as a thin bar and as a thick bar can end up with different structures and
+properties, which is the well-known mass effect <c k="asm4"/>.</p>
+
+<h2 id="sec:hard">Hardening and Hardenability</h2>
+
+<p>Hardening means cooling austenite fast enough that it transforms to martensite. The fraction of martensite that
+forms below M<sub>s</sub> depends mainly on the undercooling and is described well by the equation of Koistinen and
+Marburger <c k="km1959"/>. The hardness of fresh martensite depends mainly on its carbon content, and above about
+0.6% C it levels off, because some austenite is retained <c k="krauss2015"/>.</p>
+
+<p>How deep a steel hardens is called its hardenability. It is measured with the Jominy end-quench test, in which a
+25 mm bar is quenched from one end by a water jet and the hardness is read along its length <c k="astmA255"/>, and the
+SAE hardenability bands give the allowed range of these curves for each H-steel <c k="sae"/>. Grossmann expressed
+hardenability as the ideal critical diameter D<sub>I</sub>, the largest bar that reaches 50% martensite at its centre
+in an ideal quench, which can be estimated from composition and grain size with multiplying factors
+<c k="grossmann1942,astmA255"/>. Real quenchants are described by the Grossmann severity of quench H, which runs from
+about 0.3 per inch for still oil to about 1 for still water and up to 5 for violently agitated brine
+<c k="grossmann1939"/>.</p>
+
+<h2 id="sec:temp">Tempering and Stress Relieving</h2>
+
+<p>Fresh martensite is too brittle for most uses, so hardened steel is almost always tempered. On reheating, carbon
+first segregates and precipitates as transition carbides, retained austenite decomposes at around 200 to 300 °C,
+cementite replaces the transition carbides, and at higher temperatures the cementite coarsens and the matrix
+recovers, so the hardness falls steadily with temperature and time <c k="krauss2015,bhadeshia2017"/>. In steels with
+molybdenum, vanadium or chromium, fine alloy carbides precipitate at about 500 to 650 °C and slow down this
+softening, or even raise the hardness again, which is called secondary hardening. Hollomon and Jaffe showed that
+temperature and time can be combined into a single tempering parameter, \(P = T\,(C + \log t)\), so that treatments
+with the same <i>P</i> give about the same hardness <c k="hj1945"/>, and Grange, Hribal and Porter showed how the
+hardness of tempered martensite depends on carbon and the alloying elements <c k="grange1977"/>.</p>
+
+<p>Tempering also has 2 well-known traps. Tempering in the range of about 250 to 400 °C can lower the toughness of
+martensite, which is called tempered martensite embrittlement, and holding in or slowly cooling through about 375 to
+575 °C can embrittle steels that contain nickel, chromium and manganese together with impurities such as phosphorus
+and tin, which is called temper embrittlement <c k="krauss2015"/>. The susceptibility to temper embrittlement is often
+judged with the J factor of Watanabe and co-workers <c k="watanabe1974"/>.</p>
+
+<p>Stress relieving is a subcritical treatment, done below Ac<sub>1</sub> so that the microstructure does not change.
+During the soak a residual stress cannot stay higher than the yield strength of the steel at that temperature, so it
+relaxes, first by plastic flow and then by creep. The fall of the yield strength with temperature is tabulated for
+structural steel in EN 1993-1-2 <c k="en1993"/>. For a steel that was tempered before, the stress relief also counts
+as extra tempering, and Hollomon–Jaffe additivity tells whether it will soften the steel further.</p>
+
+<h2 id="sec:kin">Modelling Phase Transformations</h2>
+
+<p>The classical way to predict what forms on continuous cooling is a semi-empirical kinetic model for each reaction,
+combined with an additivity rule that adds up the fractions of the incubation time spent at each temperature.
+Kirkaldy and Venugopalan proposed such a model for the ferrite, pearlite and bainite reactions in low-alloy steels
+<c k="kv1984"/>, and Li et al. refined it and calibrated it on hardenability data <c k="li1998"/>. Collins et al.
+published an open implementation of the Li model together with dilatometry of 3 steels <c k="collins2023"/>, which we
+use as a check of our own implementation. Commercial tools such as JMatPro combine CALPHAD thermodynamics with kinetic
+and structure–property models <c k="saunders2003"/>. Machine learning has also been used to predict CCT and TTT
+diagrams directly from composition <c k="trzaska2007,huang2020"/>, and recent work adds physical constraints or
+physics-based features to such models <c k="cao2023,hedstrom2026"/>. These data-driven approaches usually need
+thousands of diagrams, often from closed databases.</p>
+
+<h2 id="sec:sp">Structure–Property Relationships</h2>
+
+<p>For ferrite–pearlite steels, Gladman, McIvor and Pickering gave the yield and tensile strength as a mixture law of
+ferrite and pearlite, with the ferrite strengthened by its grain size through the Hall–Petch relation and the
+pearlite by its interlamellar spacing <c k="gladman1972"/>. Pickering also gave the impact transition temperature as
+a function of the same quantities <c k="pickering1978"/>. Maynier, Jungmann and Dollet gave the hardness of
+ferrite–pearlite, bainite and martensite as functions of composition and cooling rate <c k="maynier1978"/>, which
+makes it possible to estimate the hardness of mixed structures. The ferrite grain size after cooling can be estimated
+with the relations of Hodgson and Gibbs <c k="hodgson1992"/>. In microalloyed steels, fine carbonitrides of vanadium
+and niobium add precipitation strengthening, which can be estimated from their solubility products
+<c k="irvine1967,narita1975"/> and the Ashby–Orowan relation <c k="gladman1997,gladman1999"/>.</p>
+
+<h2 id="sec:ml">Machine Learning for Steel Properties</h2>
+
+<p>Neural networks have been used to predict steel properties since the 1990s <c k="bhadeshia1999"/>, and later work
+predicts properties from composition and processing <c k="agrawal2014,xiong2020"/> or guides the model with physical
+metallurgy <c k="shen2019"/>. With small materials datasets the main risks are extrapolation and over-confidence.
+Random cross-validation hides how a model does on genuinely new materials <c k="meredig2018"/>, a model should say
+where it can be trusted <c k="sutton2020"/>, and its intervals should be calibrated, which conformal prediction does
+without assuming any distribution <c k="lei2018"/>. Gaussian processes suit small data well because they give an
+uncertainty with every prediction <c k="rasmussen2006"/>, and correcting a physical model with a statistical
+discrepancy term is the idea behind the Bayesian calibration of Kennedy and O'Hagan <c k="kennedy2001"/>. Choosing the
+next experiment where the model is least certain is known as active learning <c k="lookman2019"/>.</p>
+
+<h2 id="sec:gap">Research Gap</h2>
+
+<p>We did not find an open model that takes an arbitrary carbon or low-alloy composition through all 5 classic heat
+treatments to the microstructure and the tensile properties, gives honest intervals, and is tested on measured data
+at every step. The commercial tools are closed, the open kinetic models stop at the microstructure, and the
+machine-learning models usually leave out the heat treatment or need far more data than is openly available. This
+project was designed to fill exactly this gap.</p>

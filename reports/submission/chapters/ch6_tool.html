@@ -1,0 +1,55 @@
+<h1 id="ch:tool">The Software Tool</h1>
+
+<h2 id="sec:api">Python Interface</h2>
+
+<p>Everything in this report is available through one Python class. A user gives a composition in wt% and asks for a
+treatment, and gets back the microstructure, the properties with their 90% intervals, and any warnings. The same call
+works for any of the 5 treatments, with the bar size, the quench medium and the tempering and stress-relief
+temperatures as optional arguments, and a second call puts all 5 treatments side by side, which is <ref to="tab:five4140"/>
+for any steel.</p>
+
+<pre>from steelml.predictor import SteelPredictor
+
+model = SteelPredictor.load()
+comp = {"C": 0.40, "Mn": 0.85, "Si": 0.25,
+        "Cr": 0.95, "Mo": 0.20, "Ni": 0.10}
+
+# a 25 mm bar quenched in oil and tempered at 600 °C for 1 h
+model.heat_treat(comp, "quench_temper", section_mm=25,
+                 medium="oil", temper_T=600)
+
+# all five treatments of the same bar, side by side
+model.compare_treatments(comp, section_mm=25)</pre>
+
+<p>The answer always says what kind of steel the tool thinks it is, whether the composition lies inside the range the
+models were trained on, and which flags apply, such as the embrittlement windows for a tempering temperature or a
+microalloyed or boron composition. We felt this was important, because a number without this context can be
+misleading even when the model is good.</p>
+
+<h2 id="sec:app">Interactive Application</h2>
+
+<p>For users who do not write code there is an interactive application built with Gradio <c k="abid2019"/>, which runs
+in a web browser on a laptop. Its first tab answers the furnace against air question for any grade or composition,
+with sliders for the bar diameter, the furnace cooling rate and the austenitising temperature, and its second tab gives all 5 treatments of one bar with the quench medium and the tempering and
+stress-relief temperatures as inputs.</p>
+
+<h2 id="sec:use">Choosing a Grade and Planning Tests</h2>
+
+<p>The tool can also be used the other way round. For a specification written on the lower 90% bound, it ranks every
+standard AISI/SAE grade and cooling option inside its domain, so that it recommends a real grade and a real route
+instead of an invented composition. For a yield strength of at least 300 MPa with at least 28% elongation, it proposes
+air-cooled plain carbon steels with about 0.12 to 0.20% C, and for a tensile strength of at least 950 MPa with at
+least 12% elongation without a quench, it proposes air-cooled 4137H to 4142H.</p>
+
+<p>Because every prediction has an honest uncertainty, the tool can also say which test would teach it the most. In a
+retrospective test on the handbook data, adding the grade that the model was least sure about at each step lowered
+the error on the remaining grades much faster than adding a random grade, which is the idea
+of active learning <c k="lookman2019"/>. This makes the tool useful for planning a small set of laboratory tests.</p>
+
+<h2 id="sec:repro">Reproducibility</h2>
+
+<p>The whole study is a pipeline of 11 stages, from the raw data files to the last figure, and it runs from one command
+in about 35 minutes on a laptop. Every number in this report comes from a results file written by that pipeline, 98
+automated tests check the physics, the data parsers and the models, and 11 executed notebooks walk through the work
+step by step. All the data are open and every file is kept with its source and licence, so anyone can repeat the
+study or extend it with new data.</p>

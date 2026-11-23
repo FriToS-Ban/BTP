@@ -1,0 +1,101 @@
+<h1 id="ch:data">Data</h1>
+
+<p>We used only open data, or factual handbook values that are openly reproduced, and we kept every file together
+with its source and its licence. One rule we followed throughout is that every record must say how the steel was
+heat treated, because a strength value without its treatment cannot teach a model anything about heat treatment.</p>
+
+<h2 id="sec:sources">Data Sources</h2>
+
+<p><ref to="tab:sources"/> lists the sources and what each one was used for. The handbook data and the Birbilis
+database train the property models, the hardenability bands calibrate the transformation kinetics, and all the other
+sources are used only as independent tests.</p>
+
+<tab id="tab:sources" short="Data sources and their use in this work" class="long">
+<cap>Data sources and their use in this work</cap>
+<table class="full">
+<thead><tr><th class="l">Source</th><th class="l">What it gives</th><th>Size</th><th class="l">Used for</th></tr></thead>
+<tbody>
+<tr><td>ASM Handbook and Bethlehem Steel data <c k="asm1"/></td><td class="l">Typical yield and tensile strength,
+elongation and hardness of AISI grades after annealing and normalising, with the treatment temperatures</td><td>80
+rows, 33 grades</td><td class="l">Training the annealing and normalising models</td></tr>
+<tr><td>Birbilis et al. <c k="birbilis2025"/></td><td class="l">Tensile properties of AISI grades with the quench
+medium, the austenitising and tempering temperatures and the bar size (13, 25, 50 and 100 mm)</td><td>324 quenched and
+tempered bars of 28 grades, 241 normalised or annealed bars</td><td class="l">Training the tempering models, tests at
+other bar sizes</td></tr>
+<tr><td>SAE J403 and J1268 <c k="sae,zenodo_grades"/></td><td class="l">Composition ranges of carbon, alloy, H,
+stainless and tool steel grades</td><td>547 grades</td><td class="l">Training the steel classifier</td></tr>
+<tr><td>SteelBench <c k="steelbench"/></td><td class="l">Real heat analyses with their family labels</td><td>1358
+heats</td><td class="l">Testing the steel classifier</td></tr>
+<tr><td>Metallus hardenability data <c k="metallus2024"/></td><td class="l">SAE end-quench (Jominy) bands and the
+cooling-rate scale of the hardenability charts</td><td>80 H-grades</td><td class="l">Calibrating and testing the
+kinetics</td></tr>
+<tr><td>Collins et al. <c k="collins2023"/></td><td class="l">Measured transformation start temperatures and hardness
+at 9 cooling rates</td><td>3 steels</td><td class="l">Testing the kinetics</td></tr>
+<tr><td>Rose and Hougardy atlas <c k="smokvina2021,marohnic2025"/></td><td class="l">Measured ferrite + pearlite,
+bainite and martensite fractions and hardness after continuous cooling</td><td>423 points, 19 steels</td><td
+class="l">Testing the kinetics</td></tr>
+<tr><td>Literature compilation (this work) <c k="litsources"/></td><td class="l">Measured phase fractions, pearlite
+spacing, grain size, tensile properties and hardness</td><td>215 values, 52 papers</td><td class="l">Testing the
+microstructure and the properties</td></tr>
+</tbody></table>
+</tab>
+
+<h2 id="sec:clean">Cleaning and Checking the Data</h2>
+
+<p>A few things about the data were important to get right. Handbook typical values and specification minimum values
+are quite different numbers for the same steel, the minima being about 25 to 35% lower, so we never mixed the two.
+The composition tables had a few real errors, such as a row shift in the alloy H-steel table, swapped manganese ranges
+for 1117 and 1118, missing decimal points, and 15B21H printed as 15821H, and we corrected each of them and logged it
+with its reason. For the literature compilation, every number we transcribed was checked by a script against the
+saved paper, and values that were physically implausible, such as an annealed 1045 at 56 HV, were kept in the file
+with a quality flag but left out of every metric.</p>
+
+<p>The Birbilis database needed the same care. It lists many grades twice, 4140 and 4140H for example, with identical
+numbers, and it also contains stainless, tool and cast steels and carburised and cold-drawn products. After removing
+these and the repeated rows, its 3234 entries become 324 quenched and tempered bars of 28 grades and 241 normalised
+or annealed bars, and the parser that does this has its own tests. In this database 240 of the quenched bars were
+quenched in oil and 84 in water, mostly in 13, 25, 50 and 100 mm sizes. Its compositions are nominal, as in the
+handbook. The tempering time is not stated, so we used 1 h, and <ref to="sec:sens"/> shows that 0.5 h or 2 h changes
+the results very little.</p>
+
+<h2 id="sec:barsize">The Bar Size of the Handbook Data</h2>
+
+<p>The handbook gives one normalised value per grade but does not say on what size of bar it was measured, and for
+normalising this matters, because a thin bar cools faster in air than a thick one. The Birbilis database contains the
+same handbook values with the bar size written out, so we compared the 2 grade by grade. The match is very clear, as
+<ref to="tab:barsize"/> shows. At 25 mm the mean difference in tensile strength is only 0.4 MPa and 21 of the 28
+grades agree within 3 MPa, while at the other sizes almost none of them do. All the normalised handbook rows are
+therefore treated as 25 mm (1 inch) round bars cooled in still air.</p>
+
+<tab id="tab:barsize" short="Normalised bars of the Birbilis database against the handbook values">
+<cap>Normalised bars of the Birbilis database against the normalised handbook values of the same 28 grades (tensile
+strength of the bar minus the handbook value)</cap>
+<table>
+<thead><tr><th>Bar diameter (mm)</th><th>Mean difference (MPa)</th><th>RMS difference (MPa)</th><th>Grades within
+3 MPa</th></tr></thead>
+<tbody>
+<tr><td>13</td><td>+41.3</td><td>69.7</td><td>2 of 28</td></tr>
+<tr class="em"><td>25</td><td>+0.4</td><td>2.8</td><td>21 of 28</td></tr>
+<tr><td>50</td><td>−29.1</td><td>38.7</td><td>1 of 28</td></tr>
+<tr><td>100</td><td>−55.0</td><td>74.6</td><td>0 of 28</td></tr>
+</tbody></table>
+</tab>
+
+<p>For the annealed rows the handbook gives the annealing temperature but not the furnace cooling rate. We used
+0.005 K/s at 700 °C, which is 18 K/h and sits in the middle of the usual full-annealing practice of 10 to 30 °C per
+hour <c k="asm4"/>. <ref to="sec:sens"/> shows how the results change across the whole range of this practice.</p>
+
+<h2 id="sec:size">How Large Is the Data?</h2>
+
+<p>A fair question is why the data of this project are only a few megabytes, when some steel datasets run to a
+gigabyte. Steel datasets of that size are almost always collections of images, such as the ultrahigh-carbon steel
+micrograph database with 961 SEM images in about 270 MB <c k="uhcsdb"/>, or large tables without the processing
+history. Neither of them can teach a model what furnace cooling, air cooling or tempering does to the strength of a
+steel. What decides how well a property model generalises is the number of distinct steels and treatments with a
+measured property and a known treatment, and in tabular form that is never a large number.</p>
+
+<p>Our data hold about 2,700 such records, from the handbook and Birbilis bars, the Jominy band points, the CCT-atlas
+points, the dilatometry and the literature values, plus 1358 real heat analyses and 547 composition ranges for the
+classifier, and every record has its heat treatment. Because the property data cover a few dozen grades, every error
+in this report is measured on grades that the model never saw during training, which is a much stricter test than a
+random split.</p>

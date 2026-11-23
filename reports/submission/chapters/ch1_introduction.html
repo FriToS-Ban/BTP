@@ -1,0 +1,140 @@
+<h1 id="ch:intro">Introduction</h1>
+
+<h2 id="sec:what">What This Project Does</h2>
+
+<p>This project is about predicting what happens inside a carbon or low-alloy steel when it is heat treated, and
+what properties come out of it at the end. We built an open model that takes 3 inputs, the chemical composition of
+the steel, the heat treatment given to it and the size of the bar, and from these it predicts the phases that form,
+how fine they are, and the yield strength, tensile strength, elongation and hardness of the bar, each with a 90%
+interval. It covers the 5 classic heat treatments, which are annealing, normalising, hardening, tempering and stress
+relieving, so a single model can answer the everyday question of a heat-treatment shop, which is simply what this
+steel will be like after this treatment.</p>
+
+<p>The work started from one question set by our supervisor, which is how furnace cooling and air cooling change a
+steel. These 2 routes are the textbook difference between annealing and normalising, and answering the question
+properly needs the whole chain, from the cooling of the bar to the transformation of the austenite to the strength
+that the final microstructure gives. Once that chain was in place it was natural to extend it to the rest of the
+route, so the same physics now also handles quenching, tempering and stress relieving.</p>
+
+<p>What makes the model useful, we think, is the way it is built. Every step follows the metallurgy, so the physics
+carries the prediction into conditions that are not in the data, and machine learning is used only to correct what
+the textbook relations get wrong. Every error quoted in this report was measured on steels that the model never saw
+during training, and every prediction comes with an interval that we checked really holds on such steels. The whole
+study can be run again from one command, so anyone can reproduce it or build on it.</p>
+
+<h2 id="sec:ht">Heat Treatment of Steels</h2>
+
+<p>Most steel parts are heat treated before they go into service, because the same steel can be made soft and
+ductile or hard and strong just by changing how it is heated and cooled. Heating above the upper critical
+temperature turns the steel into austenite, and what the austenite transforms into on cooling depends on how fast it
+is cooled, on the composition of the steel and on the size of the part <c k="krauss2015,bhadeshia2017"/>. Slow
+cooling gives ferrite and pearlite, faster cooling gives finer pearlite and then bainite, and a quench gives
+martensite, which is very hard but also brittle until it is tempered.</p>
+
+<p>The size of the effect is quite large. AISI 4140 has a typical tensile strength of about 655 MPa when it is
+annealed and about 1020 MPa when it is normalised as a 25 mm bar <c k="asm1"/>, and when a 25 mm bar is quenched in
+oil and tempered, the measured values run from about 920 MPa after tempering at 650 °C to about 1800 MPa after
+tempering at 205 °C <c k="birbilis2025"/>. So the heat treatment can easily matter as much as the choice of the steel
+itself, and a model that ignores the heat treatment cannot say much that is useful about strength.</p>
+
+<h2 id="sec:five">The Five Classic Treatments</h2>
+
+<p>A heat-treatment shop does 5 classic things to a carbon or low-alloy steel. <ref to="tab:five"/> summarises them
+with the microstructure and the properties that the textbooks expect from each <c k="asm4,krauss2015"/>. In a way the
+rest of this report builds a model that fills in every column of this table for any composition and any bar size,
+and not only for the few standard cases that a handbook can list.</p>
+
+<tab id="tab:five" short="The five classic heat treatments of carbon and low-alloy steels">
+<cap>The 5 classic heat treatments of carbon and low-alloy steels, as described in the standard references
+<c k="asm4,krauss2015"/></cap>
+<table class="full">
+<thead><tr><th class="l">Treatment</th><th class="l">What is done</th><th class="l">Typical microstructure</th>
+<th class="l">What it gives</th></tr></thead>
+<tbody>
+<tr><td>Full annealing</td><td class="l">Heat about 50 °C above Ac<sub>3</sub>, hold, cool slowly with the furnace
+(about 10 to 30 °C/h)</td><td class="l">Coarse pearlite with proeutectoid ferrite or cementite</td><td class="l">Lowest
+strength and hardness, highest ductility, good machinability</td></tr>
+<tr><td>Normalising</td><td class="l">Heat about 50 to 100 °C above Ac<sub>3</sub> (or Ac<sub>cm</sub>), cool in
+still air</td><td class="l">Finer pearlite and finer ferrite grains, bainite in hardenable steels</td><td
+class="l">Higher strength and hardness than annealing, uniform grain structure</td></tr>
+<tr><td>Hardening</td><td class="l">Austenitise and quench in water, oil or brine</td><td class="l">Martensite, with
+bainite or pearlite where the cooling is slower</td><td class="l">Maximum hardness and strength, low
+toughness</td></tr>
+<tr><td>Tempering</td><td class="l">Reheat a hardened steel to 150 to 700 °C, below Ac<sub>1</sub></td><td
+class="l">Tempered martensite</td><td class="l">Some hardness traded for much better toughness and
+ductility</td></tr>
+<tr><td>Stress relieving</td><td class="l">Heat to about 500 to 650 °C, below Ac<sub>1</sub>, and cool
+slowly</td><td class="l">Unchanged</td><td class="l">Residual stresses reduced, hardness kept</td></tr>
+</tbody></table>
+</tab>
+
+<h2 id="sec:motivation">Motivation</h2>
+
+<p>In industry the properties of a heat-treated part are usually found by experience and by testing, and handbooks
+give typical values for only a few standard conditions, often one bar size and one treatment per grade. A designer
+who needs a 60 mm bar instead of a 25 mm one, or a different tempering temperature, has to guess or has to test.
+Commercial software such as JMatPro does predict transformations and properties <c k="saunders2003"/>, but it is
+closed and expensive, and its predictions cannot be checked line by line.</p>
+
+<p>Machine learning looks like a quick answer, but it has 2 real problems with steel. Most open datasets give the
+composition and the strength without saying how the steel was heat treated, so 2 steels with the same chemistry and
+different treatments look exactly the same to the model. Also, a model trained on a few dozen grades does not know
+how to extrapolate, to a new cooling rate or to a microstructure it has never seen. Physics-based models handle
+extrapolation much better, but on their own they are not accurate enough for engineering use. We felt that the best
+way was to combine the two, with the physics carrying the prediction and the data correcting it, and to be strict
+about testing every part.</p>
+
+<h2 id="sec:objectives">Objectives</h2>
+
+<p>The objectives of this project were these.</p>
+<ol>
+<li>To build a physically based chain from composition and heat treatment to microstructure, covering the
+thermodynamics, the heat flow during cooling and quenching, the transformation of austenite and tempering.</li>
+<li>To learn the yield strength, tensile strength, elongation and hardness from open data, with machine-learning
+models that are anchored on this physics.</li>
+<li>To answer the question of how furnace cooling and air cooling differ for every category of carbon and low-alloy
+steel, including the effect of the bar size.</li>
+<li>To extend the same chain to hardening, tempering and stress relieving, so that all 5 classic treatments are
+covered by one model.</li>
+<li>To give every prediction a calibrated 90% interval, and to measure how much the results depend on each modelling
+assumption.</li>
+<li>To test every part on data the models never saw, and to deliver the whole study as an open and reproducible
+tool.</li>
+</ol>
+
+<h2 id="sec:scope">Scope of the Work</h2>
+
+<p>The work covers plain carbon and low-alloy steels with up to about 1% C, 2% Mn, 1% Si, 4% Ni, 2% Cr and 1% Mo, in
+the form of round bars from 10 to 150 mm in diameter, after the 5 treatments of <ref to="tab:five"/>. The tool also
+recognises steels that lie outside this range, such as stainless, tool and maraging steels, and microalloyed or
+thermomechanically rolled steels whose strength comes mainly from the rolling schedule, and it tells the user so
+instead of giving a number it cannot stand behind. Surface treatments such as carburising and nitriding are outside
+the scope of this project.</p>
+
+<h2 id="sec:contrib">Contributions of This Work</h2>
+
+<p>We think the project adds the following to what is openly available today.</p>
+<ul>
+<li>An open chain from composition to properties for all 5 classic treatments, in which the heat flow, the
+transformation kinetics and the tempering are modelled explicitly and the machine learning only corrects them.</li>
+<li>A Bayesian calibration of the bainite kinetics on 1040 points of the SAE hardenability bands, sampled with Markov
+chain Monte Carlo, which also improves independent checks that played no part in the calibration.</li>
+<li>Property models that are clearly better than the textbook relations on grades they never saw, with a tensile
+strength error of 47 MPa against 94 MPa for annealed and normalised steel and 75 MPa against 247 MPa for quenched and
+tempered steel, and with 90% intervals that hold on those unseen grades.</li>
+<li>A clear and quantitative answer to how furnace cooling and air cooling differ for each category of steel, and how
+the bar size changes that answer.</li>
+<li>A register of every modelling assumption with a sensitivity analysis, so that a reader can see which conclusion
+depends on what.</li>
+<li>A compilation of 215 measured values from 52 open papers, each traceable to a table in its source, and a
+reproducible pipeline with 98 automated tests, executed notebooks and an interactive application.</li>
+</ul>
+
+<h2 id="sec:organisation">Organisation of the Report</h2>
+
+<p><ref to="ch:lit"/> reviews the metallurgy and the modelling work that this project builds on. <ref to="ch:data"/>
+describes the data and how they were checked. <ref to="ch:method"/> explains the model chain, from the critical
+temperatures to the machine-learning models and the way they were tested. <ref to="ch:results"/> presents the
+results, first for the transformation model and the microstructure, then for the properties after each treatment,
+and then the uncertainty and sensitivity analyses. <ref to="ch:tool"/> shows how the tool is used, and
+<ref to="ch:concl"/> gives the conclusions and the future scope of the work.</p>

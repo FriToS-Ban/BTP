@@ -1,0 +1,51 @@
+<h1 id="app:eqs">Equations as Implemented</h1>
+
+<p>Compositions are in wt% and temperatures in °C unless stated, and where we limited a published relation, the change
+is stated.</p>
+
+<h2>Transformation Kinetics</h2>
+
+<p>The rates of the Kirkaldy–Venugopalan model as modified by Li et al. <c k="kv1984,li1998"/>, with the grain size
+number <i>G</i>, the gas constant <i>R</i> = 1.987 cal mol<sup>−1</sup> K<sup>−1</sup> and <i>Q</i> = 27 500
+cal mol<sup>−1</sup>, are</p>
+<eq>k_F = f_F\, \frac{2^{0.41 G}\, (\mathrm{Ae}_3 - T)^3\, e^{-Q/RT}}{\mathrm{FC}}, \qquad k_P = f_P\, \frac{2^{0.32 G}\, (\mathrm{Ae}_1 - T)^3\, e^{-Q/RT}}{\mathrm{PC}} \\ k_B = f_B\, \frac{2^{0.29 G}\, (B_s - T)^2\, e^{-Q/RT}}{\mathrm{BC}}</eq>
+<eq>\mathrm{FC} = \exp(1.00 + 6.31\,\mathrm{C} + 1.78\,\mathrm{Mn} + 0.31\,\mathrm{Si} \\ + 1.12\,\mathrm{Ni} + 2.70\,\mathrm{Cr} + 4.06\,\mathrm{Mo})</eq>
+<eq>\mathrm{PC} = \exp(-4.25 + 4.12\,\mathrm{C} + 4.36\,\mathrm{Mn} + 0.44\,\mathrm{Si} \\ + 1.71\,\mathrm{Ni} + 3.33\,\mathrm{Cr} + 5.19\sqrt{\mathrm{Mo}})</eq>
+<eq>\mathrm{BC} = \exp(-10.23 + 10.18\,\mathrm{C} + 0.85\,\mathrm{Mn} \\ + 0.55\,\mathrm{Ni} + 0.90\,\mathrm{Cr} + 0.36\,\mathrm{Mo})</eq>
+<p>with <i>f</i><sub><i>F</i></sub> = <i>f</i><sub><i>P</i></sub> = 1 as published and <i>f</i><sub><i>B</i></sub> = 79.4
+with Δ<i>B</i><sub>s</sub> = −107 °C from the calibration on the hardenability bands. Ferrite growth is limited by the
+extrapolated Ae<sub>3</sub> lever rule, and the prior-austenite grain size after about 1 h at <i>T</i> is</p>
+<eq>G = 8 - \frac{\max(T - 850,\ 0)}{100}, \qquad 4 \le G \le 9</eq>
+
+<h2>Cementite Solvus</h2>
+
+<p>The cementite solvus used for the Hultgren condition is the fit used by Collins et al. <c k="collins2023"/>,</p>
+<eq>\mathrm{Ae}_{cm} = 224.4 + 992.4\,\mathrm{C} - 465.1\,\mathrm{C}^2 + 46.7\,\mathrm{Cr} + 19.0\,\mathrm{C}\,\mathrm{Cr} - 6.1\,\mathrm{Cr}^2 \\ + 7.6\,\mathrm{Mn} + 10.0\,\mathrm{Mo} - 6.8\,\mathrm{Cr}\,\mathrm{Mo} - 6.9\,\mathrm{Ni} + 3.7\,\mathrm{C}\,\mathrm{Ni} \\ - 2.7\,\mathrm{Cr}\,\mathrm{Ni} + 0.8\,\mathrm{Ni}^2 + 16.7\,\mathrm{Si}</eq>
+<p>and above about 0.9% C the upper critical temperature for the default normalising temperature is drawn from the
+eutectoid point with the slope of the binary Fe–Fe<sub>3</sub>C solvus, about 304 °C per % C.</p>
+
+<h2>Hardness of Bainite and Ferrite–Pearlite</h2>
+
+<p>The relations of Maynier et al. <c k="maynier1978"/>, with <i>V</i><sub><i>r</i></sub> the cooling rate at 700 °C in
+°C/h, are</p>
+<eq>\mathrm{HV}_B = -323 + 185\,\mathrm{C} + 330\,\mathrm{Si} + 153\,\mathrm{Mn} + 65\,\mathrm{Ni} + 144\,\mathrm{Cr} + 191\,\mathrm{Mo} \\ + (89 + 53\,\mathrm{C} - 55\,\mathrm{Si} - 22\,\mathrm{Mn} - 10\,\mathrm{Ni} - 20\,\mathrm{Cr} - 33\,\mathrm{Mo}) \log V_r</eq>
+<eq>\mathrm{HV}_{FP} = 42 + 223\,\mathrm{C} + 53\,\mathrm{Si} + 30\,\mathrm{Mn} + 12.6\,\mathrm{Ni} + 7\,\mathrm{Cr} + 19\,\mathrm{Mo} \\ + (10 - 19\,\mathrm{Si} + 4\,\mathrm{Ni} + 8\,\mathrm{Cr} + 130\,\mathrm{V}) \log V_r</eq>
+<p>Brinell hardness is taken as 0.95 HV below about 450 HV, and Rockwell C hardness follows the conversion table of
+ASTM E140 <c k="astmE"/>.</p>
+
+<h2>Ferrite Grain Size and Elongation</h2>
+
+<p>The ferrite grain size follows Hodgson and Gibbs <c k="hodgson1992"/> with the carbon equivalent
+C<sub>eq</sub> = C + Mn/6 held at 0.35 at most,</p>
+<eq>d_\alpha = (-0.4 + 6.37\,C_{eq}) + (24.2 - 59.0\,C_{eq})\, \dot{T}^{-1/2} \\ + 22\left[1 - \exp(-0.015\, d_\gamma)\right]\ \ \mu\mathrm{m}</eq>
+<p>for cooling rates <i>Ṫ</i> of at least 0.1 K/s, clipped to 3 to 60 µm. Elongations measured on different gauges are
+converted with Oliver's relation <c k="iso2566"/>,</p>
+<eq>A_2 = A_1 \left( \frac{k_1}{k_2} \right)^{0.4}, \qquad k = \frac{L_0}{\sqrt{S_0}}</eq>
+<p>and the uniform elongation <i>e</i><sub><i>u</i></sub> = 0.508 times the total elongation on the 4.5√<i>S</i><sub>0</sub>
+gauge, with <i>n</i> = ln(1 + <i>e</i><sub><i>u</i></sub>) as the Considère uniform true strain.</p>
+
+<h2>Precipitation</h2>
+
+<p>The precipitation strengthening is added only above 0.03% V or 0.01% Nb, and the solubility products, in wt% with
+<i>T</i> in kelvin <c k="irvine1967,narita1975"/>, are</p>
+<eq>\log[\mathrm{V}][\mathrm{C}] = 6.72 - \frac{9500}{T}, \qquad \log[\mathrm{V}][\mathrm{N}] = 3.63 - \frac{8700}{T} \\ \log[\mathrm{Nb}]\left[\mathrm{C} + \tfrac{12}{14}\mathrm{N}\right] = 2.26 - \frac{6770}{T}</eq>

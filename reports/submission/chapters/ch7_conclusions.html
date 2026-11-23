@@ -1,0 +1,51 @@
+<h1 id="ch:concl">Conclusions and Future Scope</h1>
+
+<h2 id="sec:conclusions">Conclusions</h2>
+
+<p>In this project we built an open, physics-informed model that takes a carbon or low-alloy steel through all 5
+classic heat treatments, from its composition to its microstructure and its properties, and we tested every part of
+it on data it never saw. The main conclusions are these.</p>
+
+<ol>
+<li>A chain that follows the metallurgy, with thermodynamics, heat flow, transformation kinetics and tempering, and
+uses machine learning only to correct the textbook relations, predicts the tensile strength of unseen grades within
+47 MPa after annealing and normalising and within 75 MPa after quenching and tempering, against 94 and 247 MPa for the
+textbook relations alone.</li>
+<li>The 90% intervals of the tool are honest. They contain 92.5% of the annealed and normalised values and 89 to 90%
+of the quenched and tempered values of grades left out of training.</li>
+<li>Calibrating the bainite reaction on the SAE hardenability bands, with a full Bayesian posterior, lowers the
+bainite start by about 107 °C and improves independent predictions of the dilatometry, the CCT atlas and the hardness
+of normalised bars.</li>
+<li>For low-carbon steels furnace cooling and air cooling give almost the same steel, and normalising mainly refines
+the grain. For medium- and high-carbon steels air cooling gives the same phases with much finer pearlite and a median
+gain of about 80 and 240 MPa. For hardenable Cr, Cr-Mo and Ni-Cr-Mo steels air cooling gives a different, bainitic
+steel, and the bar size matters as much as the route.</li>
+<li>The tempering model, fitted on 324 bars, recovers known metallurgy on its own, the fading effect of carbon on
+tempered hardness and the strong delay of softening by molybdenum, and reproduces the mass effect across bar sizes
+of 13 to 100 mm.</li>
+<li>The conclusions do not depend on any single modelling assumption. The accuracy changes little and the direction of every
+effect stays the same when each assumption is moved across its plausible range, and where an assumption changes the size of
+an effect, the report says by how much.</li>
+</ol>
+
+<p>We think the most useful thing about this work is that it can be trusted in a clear and checkable way. Every
+number can be traced to its data and its equation, every prediction says how sure it is, and the tool says so when a
+steel is outside what it knows.</p>
+
+<h2 id="sec:future">Future Scope</h2>
+
+<p>The natural next step is a laboratory test. The study already includes a validation protocol written before any
+test, with predictions and 90% intervals for common Indian grades, EN3B, EN8, EN9, EN18, EN19, EN24, EN42 and an
+8620-type steel, furnace cooled and air cooled as 10 and 25 mm bars. It fixes how they are to be tested, with
+spark-emission chemistry of the actual bars, a thermocouple in each bar to record the real cooling curve, tensile
+tests with an extensometer, hardness after removing the decarburised layer, and point counting, grain size and pearlite
+spacing on a few samples <c k="astmE"/>. Because the predictions are fixed in advance, even a handful of samples would
+be a genuine test of the model, and the same protocol extends naturally to quenched and tempered bars.</p>
+
+<p>Beyond that, the work can grow in a few directions. Micrograph datasets could be used to check the predicted
+constituents directly from images. The posterior of the kinetic constants suggests a slightly slower pearlite
+reaction, which can now be adopted across the whole chain. The heat-flow model can be extended from round bars to
+plates and other shapes, and the same chain can be extended to surface treatments such as carburising and induction
+hardening. Finally, as more open data with Charpy results and full heat treatments become available, a toughness
+model for quenched and tempered steel can be added in the same way, with physics, data and honest
+uncertainty together.</p>

@@ -1,0 +1,141 @@
+/* Submission report: A4, Times New Roman 12 pt, 1.5 line spacing, plain centred bold headings, black on white.
+   Left margin 38 mm for binding, 25 mm elsewhere. */
+
+@page { size: A4; margin: 22mm 22mm 22mm 30mm; }
+
+html {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 1.25;
+  color: #000;
+  background: #fff;
+  font-kerning: normal;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+body { margin: 0; background: #fff; }
+
+p { margin: 0 0 6pt; text-align: justify; hyphens: auto; orphans: 3; widows: 3; }
+em, i { font-style: italic; }
+b, strong { font-weight: bold; }
+sub, sup { font-size: 0.72em; line-height: 0; }
+a { color: inherit; text-decoration: none; }
+
+/* invisible page markers used only while the contents are computed */
+.mk { position: absolute; left: 0; top: 0; font-size: 6px; line-height: 1; color: #fff; white-space: nowrap; }
+
+/* chapter and section headings: plain, centred, bold */
+.chapter-head { break-before: auto; break-after: avoid; position: relative; text-align: center; padding-top: 10pt; margin-bottom: 8pt; }
+.chapter-head .label { font-size: 14pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; }
+.chapter-head .title { font-size: 16pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.02em;
+  margin-top: 6pt; line-height: 1.3; }
+h2 { position: relative; font-size: 13pt; font-weight: bold; text-align: center; margin: 18pt 0 9pt;
+  line-height: 1.35; break-after: avoid; page-break-after: avoid; }
+h2 + p, h2 + .eq, h2 + figure { break-before: avoid; }
+
+/* run-in leads inside paragraphs */
+.lead { font-style: italic; }
+
+/* lists */
+ol, ul { margin: 0 0 8pt; padding-left: 1.7em; }
+li { margin: 0 0 4pt; text-align: justify; hyphens: auto; }
+li::marker { font-weight: normal; }
+
+/* figures: caption below, centred last line */
+figure { position: relative; margin: 10pt 0 12pt; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+figure img { display: block; margin: 0 auto; }
+figure .svgwrap { margin: 0 auto; }
+figure .svgwrap svg { display: block; width: 100%; height: auto; }
+figcaption { font-size: 11pt; line-height: 1.35; margin-top: 6pt; text-align: justify; text-align-last: center;
+  hyphens: auto; }
+.fl { font-weight: bold; }
+
+/* tables: caption above, three rules, no colour */
+.tab { position: relative; margin: 10pt 0 12pt; break-inside: avoid; page-break-inside: avoid; }
+.tab.long { break-inside: auto; page-break-inside: auto; }
+.tab .cap { font-size: 11pt; line-height: 1.35; margin-bottom: 5pt; text-align: justify; text-align-last: center;
+  hyphens: auto; }
+.tab table { border-collapse: collapse; margin: 0 auto; font-size: 10.5pt; line-height: 1.28; }
+.tab table.full { width: 100%; }
+.tab th, .tab td { padding: 2.6pt 6pt; vertical-align: top; }
+.tab thead th { border-top: 1.1pt solid #000; border-bottom: 0.6pt solid #000; font-weight: bold; text-align: center;
+  vertical-align: bottom; }
+.tab tbody tr:last-child td { border-bottom: 1.1pt solid #000; }
+.tab td.l, .tab th.l { text-align: left; }
+.tab td { text-align: center; }
+.tab td:first-child { text-align: left; }
+.tab tr.sep td { border-top: 0.4pt solid #000; }
+.tab tr.em td { font-weight: bold; }
+.tab.compact table { font-size: 9.6pt; }
+.tab.compact td { white-space: nowrap; padding: 2.2pt 3.4pt; }
+.tab.compact th { padding: 2.2pt 3.4pt; }
+.tab.compact td:first-child { white-space: normal; }
+.tab.compact.nw td:first-child { white-space: nowrap; }
+.tab .tnote { font-size: 10pt; line-height: 1.3; margin-top: 4pt; text-align: justify; hyphens: auto; }
+
+/* equations: centred, number on the right */
+.eq { display: flex; align-items: center; margin: 4pt 0 9pt; break-inside: avoid; }
+.eq::before { content: ""; width: 2.8em; flex: none; }
+.eq .m { flex: 1; min-width: 0; text-align: center; }
+.eq .n { width: 2.8em; flex: none; text-align: right; }
+.eq .ln + .ln { margin-top: 3pt; }
+math { font-family: "STIX Two Math", math; font-size: 1.04em; }
+math[display="block"] { margin: 0; }
+
+/* code */
+pre { font-family: "Courier New", Courier, monospace; font-size: 9.5pt; line-height: 1.35; margin: 4pt 0 10pt;
+  padding: 7pt 9pt; border: 0.6pt solid #000; white-space: pre-wrap; break-inside: avoid; text-align: left; }
+code { font-family: "Courier New", Courier, monospace; font-size: 0.92em; }
+
+/* references */
+.refs-head { padding-top: 6mm; }
+.refs { font-size: 9pt; line-height: 1.22; }
+.ref { display: flex; gap: 0; margin: 0 0 2pt; break-inside: avoid; }
+.ref .rn { flex: none; width: 2.6em; }
+.ref .rt { flex: 1; text-align: justify; hyphens: auto; overflow-wrap: anywhere; }
+
+/* ---------- front matter ---------- */
+.titlepage { page: cover; position: relative; height: 252mm; display: flex; flex-direction: column;
+  justify-content: space-between; text-align: center; line-height: 1.35; }
+.titlepage .t1 { font-size: 17pt; font-weight: bold; text-transform: uppercase; line-height: 1.4; margin-top: 6mm; }
+.titlepage .t2 { font-size: 13.5pt; font-style: italic; margin-top: 7pt; line-height: 1.4; }
+.titlepage .mid { font-size: 12pt; }
+.titlepage .mid .k { font-weight: bold; font-size: 13pt; text-transform: uppercase; letter-spacing: 0.02em; }
+.titlepage .names { font-size: 13pt; font-weight: bold; line-height: 1.6; }
+.titlepage .foot { font-size: 13pt; font-weight: bold; line-height: 1.55; }
+.titlepage .rule { width: 40%; margin: 0 auto; border-top: 0.8pt solid #000; }
+
+.fm { position: relative; break-before: page; }
+h1.fm-title { font-size: 16pt; font-weight: bold; text-align: center; text-transform: uppercase;
+  letter-spacing: 0.02em; margin: 6mm 0 16pt; }
+.sig { display: flex; justify-content: space-between; margin-top: 26pt; }
+.sig .who { text-align: center; min-width: 42%; }
+.sig .line { border-top: 0.6pt solid #000; margin-bottom: 4pt; }
+.dateplace { margin-top: 18pt; line-height: 1.8; }
+.cert { margin-top: 26pt; padding-top: 14pt; border-top: 0.6pt solid #000; }
+.sig.right { justify-content: flex-end; }
+
+.toc { display: flex; align-items: baseline; margin: 0 0 1.2pt; line-height: 1.33; break-inside: avoid; }
+.toc .tn { flex: none; }
+.toc .tt { flex: 0 1 auto; }
+.toc .ld { flex: 1 1 auto; min-width: 16px; margin: 0 5px; border-bottom: 1.1px dotted #000;
+  transform: translateY(-3px); }
+.toc .pg { flex: none; min-width: 1.8em; text-align: right; }
+.toc.l0 .tt, .toc.l1 .tt { font-weight: bold; text-transform: uppercase; }
+.toc.l0 { margin-bottom: 3pt; }
+.toc.l1 { margin-top: 6pt; }
+.toc.l2 { padding-left: 1.6em; }
+.toc.l2 .tn { width: 2.6em; }
+.toc.lf .tn { width: 5.6em; }
+.toc.lf { margin-bottom: 2.5pt; }
+
+table.abbr { border-collapse: collapse; width: 100%; font-size: 11.5pt; line-height: 1.4; }
+table.abbr td { padding: 1.5pt 4pt; vertical-align: top; }
+table.abbr td:first-child { width: 22%; white-space: nowrap; }
+.abbr-sub { font-weight: bold; text-align: center; margin: 12pt 0 4pt; }
+.keywords { margin-top: 10pt; }
+
+.chapter-head:first-child { break-before: page; }
+
+.chapter-head { break-inside: avoid; page-break-inside: avoid; page-break-after: avoid; }
+.chapter-head + p, .chapter-head + h2 { break-before: avoid; }

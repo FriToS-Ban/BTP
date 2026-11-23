@@ -1,0 +1,19 @@
+<h1 id="app:repro">Reproducing the Results</h1>
+
+<p>The project is a Python package with a pipeline of 11 stages, tests, notebooks and an interactive application. On
+a laptop with Python 3 and Google Chrome, the following commands rebuild every result, figure and document from the
+raw data.</p>
+
+<pre>make setup        # create the environment and install the packages
+make pipeline     # stages 1 to 11, about 35 minutes on a laptop
+make test         # physics, data and model tests
+make notebooks    # execute the presentation notebooks
+make app          # start the interactive application in a browser
+make report       # rebuild the generated reports and slides</pre>
+
+<p>The 11 stages are the datasets, the steel categories, the transformation model, the property models, the furnace
+against air comparison, the external tests, grade selection and active learning, hardenability and the kinetic
+calibration, hardening and tempering, the assumption register and its sensitivity analysis, and the kinetic
+uncertainty. Each stage writes its results to its own files, and every figure and every number in this report comes
+from those files. The data folder holds every raw file
+with its source and licence, together with a log of every correction made to a source.</p>

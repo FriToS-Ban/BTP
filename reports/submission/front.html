@@ -1,0 +1,75 @@
+<section class="titlepage">
+  <div>
+    <div class="t1">@@TITLE@@</div>
+    <div class="t2">@@SUBTITLE@@</div>
+  </div>
+  <div class="mid">
+    <div class="k">A Project Report</div>
+    <div>submitted in partial fulfilment of the requirements for the award of the degree of</div>
+    <div class="k" style="margin-top:6pt">Bachelor of Technology</div>
+    <div>in</div>
+    <div class="k">Metallurgical and Materials Engineering</div>
+    <div style="margin-top:4pt">(B.Tech Project, MTP-400A)</div>
+  </div>
+  <div class="mid">
+    <div>by</div>
+    <div class="names">Aviral Singh<br>Shibasish Banerjee</div>
+  </div>
+  <div class="mid">
+    <div>under the guidance of</div>
+    <div class="names">Dr. Anish Karmakar</div>
+  </div>
+  <div class="foot">Department of Metallurgical and Materials Engineering<br>Indian Institute of Technology Roorkee<br>
+    Roorkee 247667, India<br>November 2026</div>
+</section>
+
+<section class="fm" data-key="ack">
+<h1 class="fm-title">Acknowledgement</h1>
+<p>We are really grateful to our supervisor, Dr. Anish Karmakar, for the guidance and patience given to us throughout
+this project. The question at the heart of this work, how furnace cooling and air cooling change a steel, came from
+Dr. Karmakar, and the point that the properties of a steel come from what is done to it, and not only from its
+chemistry, became the backbone of everything we built. Being asked again and again how we knew that a result was true
+pushed us to test every part of the model on data it had never seen, and we think the work is much better for it.</p>
+<p>We thank the Department of Metallurgical and Materials Engineering, Indian Institute of Technology Roorkee, for the
+courses and the environment that made a project like this possible.</p>
+<p>This work rests on data that other people chose to share openly, and we are thankful to all of them, in particular
+N. Birbilis and co-workers for their database of steel properties, J. Collins and co-workers for their dilatometry
+and their open transformation model, S. Smokvina Hanza, T. Marohnić and co-workers for publishing the
+continuous-cooling atlas data in an open form, and the many
+authors whose open-access papers gave us the measured values of our literature compilation.</p>
+<p>Finally, we thank our families and friends for their support and encouragement during the many long days that this
+project took.</p>
+<div class="sig" style="margin-top:34pt"><div></div><div class="who" style="text-align:right;min-width:0">Aviral Singh<br>Shibasish Banerjee</div></div>
+</section>
+
+<section class="fm" data-key="abstract">
+<h1 class="fm-title">Abstract</h1>
+<p>Heat treatment decides what a steel is really like in service, and the same bar can be soft and easy to machine or
+hard and strong depending only on how it was heated and cooled. In this project we built an open, physics-informed
+machine-learning model that takes the composition of a carbon or low-alloy steel, its heat treatment and the size of
+the bar, and predicts the microstructure that forms and the yield strength, tensile strength, elongation and hardness
+that follow, each with a 90% interval. It covers the 5 classic treatments, which are annealing, normalising,
+hardening, tempering and stress relieving.</p>
+<p>The model follows the metallurgy step by step. Empirical thermodynamics gives the critical temperatures, a heat
+balance gives the cooling path of a bar in a furnace, in still air or in a quench, the Kirkaldy–Venugopalan kinetics
+of Li et al. gives the ferrite, pearlite, bainite and martensite, a Hollomon–Jaffe model handles tempering and stress
+relief, and Gaussian-process models anchored on the classical structure–property laws learn what those laws miss. We
+calibrated the bainite reaction on 1040 points of the SAE hardenability bands with a full Bayesian posterior.</p>
+<p>On grades left out of training, the tensile strength of annealed and normalised steel is predicted within 47 MPa,
+against 94 MPa for the textbook relations alone, and that of quenched and tempered bars within 75 MPa over 324 bars of
+28 grades, against 247 MPa. The 90% intervals contain 92.5% and 89% of these unseen values. The model was also tested
+against dilatometry, 423 points of a continuous-cooling atlas, the Jominy bands of 80 H-steels, normalised bars of
+other sizes and of new grades and 215 values from 52 papers.</p>
+<p>The question set by our supervisor, how furnace cooling and air cooling differ, gets a clear answer. For low-carbon
+steels the 2 routes give almost the same steel. For medium- and high-carbon steels air cooling gives the same phases
+with much finer pearlite and a median gain in tensile strength of about 80 and 240 MPa, and for hardenable Cr-Mo and
+Ni-Cr-Mo steels it gives a different, bainitic steel, so for them the bar size matters as much as the route. The whole
+study runs again from one command and comes with a Python interface and an interactive application.</p>
+<p class="keywords"><b>Keywords:</b> heat treatment, annealing, normalising, hardening, tempering, stress relieving,
+carbon and low-alloy steels, transformation kinetics, Gaussian processes, uncertainty quantification</p>
+</section>
+
+<!--CONTENTS-->
+
+
+

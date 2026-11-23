@@ -1,0 +1,240 @@
+<h1 id="ch:method">Methodology</h1>
+
+<h2 id="sec:chain">Overview of the Model Chain</h2>
+
+<p>The model follows the same steps a metallurgist would follow on paper, as <ref to="fig:flow"/> shows. From the
+composition it first decides what kind of steel this is and whether it lies inside the range the model knows. It then
+computes the critical temperatures, works out how the bar cools for the chosen treatment, and integrates the
+transformation kinetics along that cooling path to get the phases and how fine they are. Tempering and stress
+relieving act on this microstructure, the classical structure–property laws turn it into a physics estimate of
+strength and hardness, and Gaussian-process models anchored on that estimate give the final properties with their
+intervals. Each step is a separate, tested module, so every step can be checked on its own data, and this is what
+lets us say where an error comes from when we see one.</p>
+
+<fig id="fig:flow" src="img/flow.svg" w="70%" short="The model chain from composition and heat treatment to properties">The
+model chain, from the composition and the heat treatment to the properties. Every box is a separate module of the
+code, and every box is tested on its own data in <ref to="ch:results"/>.</fig>
+
+<h2 id="sec:class">Steel Category and Domain Check</h2>
+
+<p>To train the steel classifier we simulated 40 heats per grade inside the published composition ranges of 547
+grades, which gives 21,880 heats in 13 categories, from low-carbon steel to tool steel. We trained 5 classifiers,
+which were logistic regression, k-nearest neighbours, a small neural network, a random forest and XGBoost
+<c k="chen2016,pedregosa2011"/>, and tested them on grades they had never seen, by grouping the cross-validation folds
+by grade, and on 1358 real heats. Before looking at any result we fixed the rule that the production model would be
+the one with the best accuracy on the real heats. As a fair baseline we also wrote the AISI/SAE composition limits as
+a simple decision list with nothing fitted, for example S ≥ 0.07% for free-machining steels, Si ≥ 1% for Si-Mn steels
+and Mo ≥ 0.08% for Mo and Cr-Mo steels, with carbon limits of 0.25 and 0.60% <c k="callister2018"/>. A novelty score,
+the distance to the nearest known grade, lets the classifier answer that a steel belongs to none of the categories,
+and the same check tells the property models when a composition is outside the range they were trained on.</p>
+
+<h2 id="sec:crit">Critical Temperatures and Default Treatments</h2>
+
+<p>The equilibrium critical temperatures come from the equations of Grange <c k="grange1961"/>, which are written in
+°F and converted to °C in the code,</p>
+<eq id="eq:ae3">\mathrm{Ae}_3\ (\text{°F}) = 1570 - 323\,\mathrm{C} - 25\,\mathrm{Mn} + 80\,\mathrm{Si} - 3\,\mathrm{Cr} - 32\,\mathrm{Ni}</eq>
+<eq id="eq:ae1">\mathrm{Ae}_1\ (\text{°F}) = 1333 - 25\,\mathrm{Mn} + 40\,\mathrm{Si} + 42\,\mathrm{Cr} - 26\,\mathrm{Ni}</eq>
+<p>with the element symbols standing for their contents in wt%. The cementite solvus Ae<sub>cm</sub> comes from the
+fit used by Collins et al. <c k="collins2023"/>, the eutectoid point from the intersection of Ae<sub>3</sub> and
+Ae<sub>cm</sub>, and the equilibrium pearlite fraction of a hypoeutectoid steel from the lever rule,</p>
+<eq id="eq:lever">f_P = \frac{\mathrm{C} - 0.02}{\mathrm{C}_e - 0.02}</eq>
+<p>where C<sub>e</sub> is the eutectoid carbon content. The martensite start temperature follows Steven and Haynes
+<c k="steven1956"/>,</p>
+<eq id="eq:ms">M_s\ (\text{°C}) = 561 - 474\,\mathrm{C} - 33\,\mathrm{Mn} - 17\,\mathrm{Ni} - 17\,\mathrm{Cr} \\ - 21\,\mathrm{Mo} - 7.5\,\mathrm{Si} + 10\,\mathrm{Co}</eq>
+<p>When the user does not give a temperature, the tool uses the practice of its own data. Full annealing is done at
+the higher of Ae<sub>3</sub> + 50 °C and Ae<sub>1</sub> + 65 °C, normalising at the upper critical temperature plus
+110 °C but not below 870 °C, and hardening at the higher of Ae<sub>3</sub> + 70 °C and Ae<sub>1</sub> + 90 °C. These
+simple rules reproduce the temperatures of the handbook and the Birbilis data within 14, 15 and 16 °C on average, and
+they change smoothly with composition. Compositions outside the window in which the empirical equations were derived
+are flagged.</p>
+
+<h2 id="sec:cooling">Cooling and Quenching</h2>
+
+<p>Furnace cooling is treated as Newtonian cooling with a rate of 0.005 K/s at 700 °C. Air cooling is a heat balance
+of a long round bar in still air, with natural convection, radiation and the temperature-dependent specific heat of
+steel from EN 1993-1-2 <c k="en1993"/>,</p>
+<eq id="eq:air">\rho\, c(T)\, \frac{\mathrm{d}T}{\mathrm{d}t} = -\frac{4}{D}\left[ h_c\,(T - T_\infty) + \varepsilon\, \sigma \left(T^4 - T_\infty^4\right) \right] \\ h_c = 1.32 \left( \frac{T - T_\infty}{D} \right)^{1/4}</eq>
+<p>where <i>D</i> is the bar diameter, ε = 0.8 is the emissivity and σ is the Stefan–Boltzmann constant. The Biot
+number stays below 0.1 up to a diameter of 100 mm, so the bar can be treated as one lump at a single temperature.</p>
+
+<p>A quenched bar is different, because its surface and its centre cool at very different rates, so for a quench we
+solve the transient radial conduction in a long round bar with finite volumes,</p>
+<eq id="eq:quench">\rho\, c(T)\, \frac{\partial T}{\partial t} = \frac{1}{r} \frac{\partial}{\partial r}\left( k(T)\, r\, \frac{\partial T}{\partial r} \right), \qquad -k \left. \frac{\partial T}{\partial r} \right|_{r = R} = h\,(T_s - T_{\mathrm{bath}})</eq>
+<p>with the conductivity <i>k</i>(<i>T</i>) of EN 1993-1-2. The heat-transfer coefficient comes from Grossmann's
+severity of quench <i>H</i> <c k="grossmann1939"/>,</p>
+<eq id="eq:h">h = 2\, k_{\mathrm{ref}}\, H, \qquad k_{\mathrm{ref}} = 30\ \mathrm{W\,m^{-1}\,K^{-1}}</eq>
+<p>using the middle of the mild-agitation class of the Grossmann table, which is 0.325 per inch for oil and 1.05 per
+inch for water, and an ideal quench holds the surface at the bath temperature. With constant properties the solver
+matches the exact Bessel-series solution to within 2% of the temperature difference, which is checked by an automated
+test. During a liquid quench the specific heat is used without the peak that EN 1993-1-2 puts near 735 °C. That peak
+stands for the latent heat of the ferrite and pearlite reactions during slow cooling, and in a quench the austenite is
+undercooled far below 735 °C before anything forms, so leaving it out is the physically right choice here. The tensile
+properties of a quenched bar are predicted at the specimen position of ASTM A370 <c k="astmA370"/>, which is the
+centre for bars up to 38 mm and the mid-radius for larger bars.</p>
+
+<p>The Jominy bar is solved by 1-D conduction along its length, with a water-jet coefficient of about 8000 W m<sup>−2</sup>
+K<sup>−1</sup> at the quenched end. With this value the cooling rates along the bar match the scale of the combined hardenability
+charts <c k="metallus2024"/> within a factor of 0.86 to 1.26 over the whole bar.</p>
+
+<h2 id="sec:kinetics">Transformation Kinetics</h2>
+
+<p>The ferrite, pearlite and bainite reactions follow the model of Kirkaldy and Venugopalan as modified by Li et al.
+<c k="kv1984,li1998"/>, which we wrote from its published equations. The time to reach a fraction <i>X</i> of reaction
+<i>j</i> at temperature <i>T</i> is</p>
+<eq id="eq:tau">\tau_j(X, T) = \frac{S(X)}{k_j(T)}, \qquad S(X) = \int_0^X \frac{\mathrm{d}x}{x^{0.4(1-x)}\,(1-x)^{0.4x}}</eq>
+<p>where the rate <i>k</i><sub><i>j</i></sub> grows with the undercooling below the start temperature of the reaction,
+falls with the composition-dependent factors FC, PC and BC of Li et al., and depends on the ASTM grain size number
+<i>G</i> of the austenite. For continuous cooling the reaction is integrated along the cooling
+path with the additivity rule,</p>
+<eq id="eq:add">S\big(X(t)\big) = \int_0^t k_j\big(T(t')\big)\, \mathrm{d}t'</eq>
+<p>which is the Scheil idea written for the whole reaction and not only for its start. Ferrite forms below
+Ae<sub>3</sub> and enriches the remaining austenite in carbon, pearlite starts once that austenite is below both its
+own Ae<sub>3</sub> and Ae<sub>cm</sub> (the Hultgren condition), bainite forms below the bainite start temperature</p>
+<eq id="eq:bs">B_s\ (\text{°C}) = 637 - 58\,\mathrm{C} - 35\,\mathrm{Mn} - 15\,\mathrm{Ni} - 34\,\mathrm{Cr} - 41\,\mathrm{Mo} + \Delta B_s</eq>
+<p>and the austenite that is left at M<sub>s</sub> transforms to martensite according to Koistinen and Marburger
+<c k="km1959"/>,</p>
+<eq id="eq:km">f_M = f_\gamma \left[ 1 - \exp\!\big(-0.011\,(M_s - T)\big) \right]</eq>
+<p>where <i>f</i><sub>γ</sub> is the fraction of austenite remaining. The prior-austenite grain size is taken as
+ASTM 8 after austenitising at up to 850 °C, one number coarser for every 100 °C above that, which is typical of
+fine-grained, aluminium-killed steel. The kinetics run in compiled code <c k="lam2015"/>, which makes it practical to
+sweep every grade of the catalogue over many cooling conditions. <ref to="fig:cct"/> shows 2 continuous
+cooling diagrams computed this way, with the furnace and air cooling paths drawn on them.</p>
+
+<fig id="fig:cct" src="figures/fig09b_cct_1045_vs_4140.png" w="70%" short="Computed CCT diagrams of AISI 1045 and 4140 with cooling paths">Continuous
+cooling diagrams computed by the model for AISI 1045 and AISI 4140, with the furnace cooling path (0.005 K/s at
+700 °C) and the still-air path of a 25 mm bar. The same air cooling gives ferrite and pearlite in 1045 and mostly
+bainite in 4140.</fig>
+
+<p><span class="lead">Calibration on the hardenability bands.</span> We calibrated 4 constants of the kinetics,
+multipliers on the ferrite, pearlite and bainite rates and the shift Δ<i>B</i><sub>s</sub>, on the SAE hardenability
+bands of the non-boron H-steels, 1040 points in all. The published model is the prior, with the logarithm of each
+multiplier distributed as N(0, 1) and Δ<i>B</i><sub>s</sub> as N(0, 50 °C). The target is the middle of each band, and
+the noise is a quarter of the band width plus a model error that is fitted together with the constants. The hardness
+along the bar is computed from the predicted phases with the relations of Maynier et al. <c k="maynier1978"/>. We
+first found the maximum of the posterior and then sampled the full posterior with 4 adaptive Metropolis chains
+<c k="haario2001"/> started from spread-out points, checking convergence with the split R-hat statistic and the
+effective sample size <c k="gelman2013"/>. Boron grades are left out, because neither the kinetics nor the hardness
+relations contain boron. We adopted the calibration for the whole chain only after checking that it also improves
+predictions on data it never saw (<ref to="sec:kinres"/>).</p>
+
+<h2 id="sec:micro">Microstructure Quantities</h2>
+
+<p>The kinetics decide how much bainite, martensite and proeutectoid cementite form. The remaining ferrite and
+pearlite are reported with their lever-rule split as the central value and the kinetic split as the upper end of a
+band, which agrees best with measured fractions in normalised steels. The interlamellar spacing of the pearlite
+follows a power law in the undercooling ΔT below Ae<sub>1</sub> at which the pearlite forms,</p>
+<eq id="eq:s0">S_0 = 3.33\, \Delta T^{-0.607}\ \ \mu\mathrm{m}</eq>
+<p>which we fitted on 14 measured continuous-cooling spacings from 4 papers. The ferrite grain size follows the
+relation of Hodgson and Gibbs <c k="hodgson1992"/> for low carbon equivalents, with the carbon equivalent held at
+0.35 at most so that medium-carbon steels do not all fall onto the lower limit of the relation.</p>
+
+<h2 id="sec:props">Structure–Property Relations</h2>
+
+<p>For the ferrite and pearlite part of the structure, the yield and tensile strength come from the mixture law of
+Gladman, McIvor and Pickering <c k="gladman1972"/>,</p>
+<eq id="eq:gys">\sigma_y = f_\alpha^{1/3}\left(35.4 + 58.5\,\mathrm{Mn} + 17.4\, d^{-1/2}\right) \\ + \left(1 - f_\alpha^{1/3}\right)\left(178.9 + 3.9\, S_0^{-1/2}\right) + 63\,\mathrm{Si} + 425\sqrt{N_f}</eq>
+<eq id="eq:guts">\sigma_{\mathrm{UTS}} = f_\alpha^{1/3}\left(246 + 1143\sqrt{N_f} + 18.1\, d^{-1/2}\right) \\ + \left(1 - f_\alpha^{1/3}\right)\left(719 + 3.5\, S_0^{-1/2}\right) + 95\,\mathrm{Si}</eq>
+<p>in MPa, with the ferrite fraction <i>f</i><sub>α</sub>, the ferrite grain size <i>d</i> and the spacing
+<i>S</i><sub>0</sub> in mm, and the free nitrogen <i>N</i><sub>f</sub> in wt%. For bainite and martensite we use the
+hardness relations of Maynier et al. <c k="maynier1978"/>, for example for martensite</p>
+<eq id="eq:hvm">\mathrm{HV}_M = 127 + 949\,\mathrm{C} + 27\,\mathrm{Si} + 11\,\mathrm{Mn} + 8\,\mathrm{Ni} + 16\,\mathrm{Cr} + 21\log V_r</eq>
+<p>where <i>V</i><sub><i>r</i></sub> is the cooling rate at 700 °C in °C/h, capped at 865 HV because retained austenite
+stops fresh martensite from getting harder above about 0.6% C <c k="krauss2015"/>. The physics strength that anchors
+the machine-learning models combines the two parts,</p>
+<eq id="eq:uphys">\sigma_{\mathrm{phys}} = f_{FP}\, \sigma_{\mathrm{UTS}}^{\mathrm{Gladman}} + f_{BM} \times 3.3\, \mathrm{HV}^{\mathrm{Maynier}}_{BM}</eq>
+<p>where <i>f</i><sub><i>FP</i></sub> and <i>f</i><sub><i>BM</i></sub> are the fractions of ferrite plus pearlite and of
+bainite plus martensite. Uniform elongation is reported as a fixed fraction, 0.508 ± 0.051, of the total elongation
+once both are put on the same 4.5√<i>S</i><sub>0</sub> gauge with Oliver's relation <c k="iso2566"/>, a ratio we
+found from 10 tensile tests in 4 papers. For ferrite–pearlite states the tool also gives Pickering's impact
+transition temperature <c k="pickering1978"/>,</p>
+<eq id="eq:itt">\mathrm{ITT}\ (\text{°C}) = -19 + 44\,\mathrm{Si} + 700\sqrt{N_f} + 2.2\,P_{\%} - 11.5\, d^{-1/2}</eq>
+<p>where <i>P</i><sub>%</sub> is the percentage of pearlite.</p>
+
+<h2 id="sec:tempering">Tempering Model</h2>
+
+<p>Tempering is described with the Hollomon–Jaffe parameter <c k="hj1945"/>,</p>
+<eq id="eq:hj">P = T_{\mathrm{K}}\, \left(20 + \log_{10} t_{\mathrm{h}}\right)</eq>
+<p>with the temperature in kelvin and the time in hours. A first treatment with parameter <i>P</i><sub>1</sub> counts
+at a second temperature <i>T</i><sub>2</sub> as an equivalent time</p>
+<eq id="eq:teq">t_{\mathrm{eq}} = 10^{\,P_1/T_{2,\mathrm{K}} - 20}\ \ \mathrm{h}</eq>
+<p>which is how 2 treatments add up. Martensite softens from its as-quenched hardness HV<sub>M0</sub> towards a fully
+tempered hardness along a logistic curve in <i>P</i>, and molybdenum, vanadium and chromium add a secondary-hardening
+bump near 600 °C,</p>
+<eq id="eq:temper">\mathrm{HV}_M(P) = \mathrm{HV}_{\mathrm{soft}} + \frac{\mathrm{HV}_{M0} - \mathrm{HV}_{\mathrm{soft}}}{1 + \exp\!\left[(P - P_{50})/W\right]} \\ + \left(a_{\mathrm{Mo}}\mathrm{Mo} + a_{\mathrm{V}}\mathrm{V} + a_{\mathrm{Cr}}\mathrm{Cr}\right) \exp\!\left[-\left(\frac{P - 17500}{1500}\right)^{2}\right]</eq>
+<p>where the midpoint of the softening moves linearly with the alloy content,</p>
+<eq id="eq:p50">P_{50} = p_0 + p_{\mathrm{Mn}}\mathrm{Mn} + p_{\mathrm{Si}}\mathrm{Si} + p_{\mathrm{Cr}}\mathrm{Cr} + p_{\mathrm{Mo}}\mathrm{Mo} + p_{\mathrm{V}}\mathrm{V} \\ \mathrm{HV}_{\mathrm{soft}} = s_0 + s_{\mathrm{C}}\,\mathrm{C}</eq>
+<p>Bainite keeps its hardness until the tempered martensite falls below it and then follows it, and ferrite and
+pearlite are left unchanged. The 12 constants were fitted on the tensile strengths of the 324 quenched and tempered
+bars through UTS = 3.3 HV, starting from literature priors. To make the fit well behaved, it works in coordinates
+scaled by the prior widths and uses several starting points, and a bootstrap over grades gives the uncertainty of each
+fitted constant.</p>
+
+<h2 id="sec:other">Stress Relieving, Precipitation and Toughness</h2>
+
+<p><span class="lead">Stress relieving.</span> The tool first checks that the soak is subcritical, at least 25 °C below
+Ac<sub>1</sub> from the equation of Andrews <c k="andrews1965"/>. During the soak a residual stress can be no larger
+than the yield strength at that temperature, so it is bounded by</p>
+<eq id="eq:sr">\sigma_{\mathrm{res}} \le k_y(T)\, \sigma_y</eq>
+<p>with the reduction factor <i>k</i><sub><i>y</i></sub>(<i>T</i>) of EN 1993-1-2 <c k="en1993"/>, which is 1.0 up to
+400 °C, 0.78 at 500 °C, 0.47 at 600 °C and 0.23 at 700 °C. For a tempered steel the soak is added to the earlier
+tempering with <ref to="eq:teq"/>, and the properties change only if the combined parameter is higher than the one
+the steel already had.</p>
+
+<p><span class="lead">Precipitation strengthening.</span> For steels with vanadium or niobium above microalloying
+levels, the amounts that dissolve at the austenitising temperature come from the solubility products of Irvine et al.
+and Narita <c k="irvine1967,narita1975"/>, and the strengthening from the re-precipitated particles follows the
+Ashby–Orowan relation <c k="gladman1999"/>,</p>
+<eq id="eq:orowan">\Delta\sigma = \frac{5.9\sqrt{f}}{x} \ln\!\left( \frac{x}{2.5 \times 10^{-4}} \right)\ \ \mathrm{MPa}</eq>
+<p>where <i>f</i> is the volume fraction of particles and <i>x</i> their mean size in µm, taken as 8 nm after air
+cooling (fine interphase precipitates) and 30 nm after furnace cooling (coarsened) <c k="gladman1997"/>.</p>
+
+<p><span class="lead">Toughness and composition flags.</span> For tempered states the tool flags the 2 documented
+embrittlement windows, tempered martensite embrittlement for tempering at 250 to 400 °C and temper embrittlement for
+375 to 575 °C in steels with Ni, Cr and Mn, using Watanabe's factor <c k="watanabe1974"/></p>
+<eq id="eq:j">J = (\mathrm{Mn} + \mathrm{Si})(\mathrm{P} + \mathrm{Sn}) \times 10^{4}</eq>
+<p>with a residual tin content of 0.01% when none is given. Low-carbon chemistries with Nb, Ti or V and at least 1% Mn
+are recognised as thermomechanically processed (TMCP) or HSLA types, and boron steels are flagged, so that the user
+knows when a prediction needs extra care.</p>
+
+<h2 id="sec:mlmodels">Machine-Learning Models</h2>
+
+<p>All the property models are Gaussian processes <c k="rasmussen2006"/> with a Matérn 5/2 kernel that has its own
+length scale for every input, plus a white-noise term, and the hyperparameters are found by maximising the marginal
+likelihood from several starting points <c k="pedregosa2011"/>. The key idea is the anchor. Instead of learning the
+property from scratch, the physics-anchored model learns only a multiplicative correction to the physics
+strength,</p>
+<eq id="eq:anchor">y(\mathbf{x}) = y_{\mathrm{phys}}(\mathbf{x})\, \exp\!\big[g(\mathbf{x})\big], \qquad g \sim \mathcal{GP}\big(0, k(\mathbf{x}, \mathbf{x}')\big)</eq>
+<p>so that far from the training data the correction fades to zero and the prediction falls back on the physics. This
+is a simple form of the discrepancy modelling of Kennedy and O'Hagan <c k="kennedy2001"/>.</p>
+
+<p>For annealed and normalised steel the production model averages 3 partly independent routes from microstructure
+to properties, the physics-anchored chain, the textbook relations with a Gaussian-process residual, and a Gaussian
+process on composition and physics descriptors. When the cooling produces more bainite and martensite than any
+training steel had, the weight of the purely data-driven member moves to the 2 physics-anchored members. The
+microstructure enters the machine learning in the form of the Gladman mixture law, as the ferrite share, the ferrite
+Hall–Petch term and the pearlite fineness, each weighted by the ferrite plus pearlite fraction, so that these inputs go
+smoothly to zero for a bainitic steel. Silicon and vanadium are not used as machine-learning inputs, because almost
+every training grade has the same nominal silicon and almost none has vanadium, so a model that is allowed to use them
+learns effects that are not real.
+For quenched and tempered steel the production model is an equal mixture of a physics-anchored Gaussian process and a
+Gaussian process on the composition and the process variables, with the tempering expressed as the equivalent
+temperature for 1 h from <ref to="eq:hj"/>.</p>
+
+<h2 id="sec:validation">Validation and Uncertainty</h2>
+
+<p>Every model was scored by leave-one-grade-out cross-validation, in which all the rows of one grade are left out,
+the model is trained on the rest and the left-out grade is predicted, so a grade is never in the training set when it
+is predicted. The 90% intervals are normalised split-conformal intervals <c k="lei2018"/>,</p>
+<eq id="eq:conformal">\hat{y}(\mathbf{x}) \pm q\, \sigma(\mathbf{x}), \qquad q = \text{the } \lceil (1 - \alpha)(n + 1) \rceil\text{-th smallest of } |y_i - \hat{y}_i|/\sigma_i</eq>
+<p>with α = 0.1, where σ(<b>x</b>) is the model's own standard deviation and the scores come from the left-out grades,
+so the coverage of the intervals is itself checked on unseen grades. Models were compared with paired tests on the
+per-grade errors, a Wilcoxon signed-rank test with the Holm correction <c k="wilcoxon1945,holm1979"/> and a bootstrap
+interval of the difference in RMSE. We also checked that the predictions behave physically over sweeps that the data
+do not contain, such as the cooling rate, the carbon content and the silicon content.</p>
+
+<p>For the transformation model, 200 draws from the posterior of the kinetic constants were pushed through the
+kinetics to the 423 measured points of the CCT atlas, which played no part in the calibration, to see how much of the
+error the parameter uncertainty explains and how much has to be added as a model-form term. Finally, every modelling
+assumption was moved to the ends of its plausible range one at a time, with the models retrained each time, and a
+Morris elementary-effects screen <c k="morris1991"/> varied all of them together, so that we know which conclusions
+depend on which assumption.</p>
