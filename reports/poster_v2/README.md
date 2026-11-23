@@ -1,8 +1,8 @@
 # A1 poster, version 2
 
-**One Steel, Five Heat Treatments**
-*Predicting what changes, and why: physics-informed machine learning of microstructure and properties of carbon
-and low-alloy steels*
+**Classify, Heat-Treat, Predict: Machine Learning for Steels**
+*One model names a carbon or low-alloy steel, follows it through five heat treatments and predicts its
+microstructure and properties*
 
 `BTP_poster_A1_v2.pdf` (print, 594 × 841 mm, no bleed) and `BTP_poster_A1_v2.pptx` (editable) are built on
 `Template.pptx`, the department frame with the IIT Roorkee logo. Every number and every plotted value comes
@@ -11,14 +11,16 @@ from `results/`; nothing is typed in by hand. The first poster is kept unchanged
 ## What changed from the first poster
 
 * **Title.** "Furnace or Air Cooling? Predicting What Changes in a Steel" named one question. The new title is a
-  short line for the whole project, set large as on the template (50 pt), and the subtitle says what is predicted,
-  how, and for which steels.
+  single line for the whole project: the three things the model does, and machine learning. It is set large as on
+  the template (50 pt), the subtitle spells the three steps out, and the graphical abstract follows the same order.
 * **Figures: 15 instead of 8.** New: transformation starts against dilatometry (3), hardness against the CCT atlas
   (4), the model ladder (6), hardenability across the whole grade catalogue (9), furnace against air by steel
   family (10), the bar-size effect against measured bars (11) and the mass effect after quenching and tempering
   (15).
-* **Sections.** "Validation Against Experiments" is new. "Software Tool" and "Project Team" are gone: the team is in
-  the header, and the repository address is in the acknowledgements.
+* **Sections.** "Novelty of This Work" (what exists today against what this work adds, following the report's
+  research gap and contributions) and "Validation Against Experiments" are new. The last section is "Conclusions",
+  with no future work. "Software Tool" and "Project Team" are gone: the team is in the header, and the repository
+  address is in the acknowledgements.
 * **Build.** Chrome lays out the page and prints the PDF, so it builds on macOS, Windows or Linux without
   PowerPoint. The same layout is then written to the template as an editable PPTX.
 

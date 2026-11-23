@@ -689,11 +689,11 @@ def fig_qtmass(w, h, grade="4140", medium="oil"):
 COL = 274.5
 HALF = 133.25      # half of the column, less an 8 mm gap
 SIZES = {  # mm at print size; build_poster.py reads these so slots and figures always match
-    "routes": (COL, 61), "cooling": (HALF, 80),
-    "starts": (HALF, 76), "atlas": (HALF, 76), "parity": (HALF, 76), "ladder": (HALF, 76),
-    "carbon": (COL, 76), "cct": (COL, 80), "harden": (COL, 70),
-    "family": (HALF, 82), "barsize": (HALF, 82),
-    "jominy": (HALF, 80), "five": (HALF, 80), "tempering": (HALF, 80), "qtmass": (HALF, 80),
+    "routes": (COL, 55), "cooling": (HALF, 80),
+    "starts": (HALF, 70), "atlas": (HALF, 70), "parity": (HALF, 70), "ladder": (HALF, 70),
+    "carbon": (COL, 71), "cct": (COL, 75), "harden": (COL, 63),
+    "family": (HALF, 76), "barsize": (HALF, 76),
+    "jominy": (HALF, 73), "five": (HALF, 73), "tempering": (HALF, 73), "qtmass": (HALF, 73),
 }
 FIGS = [("routes", fig_routes), ("cooling", fig_cooling), ("starts", fig_starts), ("atlas", fig_atlas),
         ("parity", fig_parity), ("ladder", fig_ladder), ("carbon", fig_carbon), ("cct", fig_cct),

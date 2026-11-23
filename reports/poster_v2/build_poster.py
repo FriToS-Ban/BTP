@@ -30,9 +30,9 @@ from poster_fonts import sans_fonts  # noqa: E402
 
 OUT_NAME = "BTP_poster_A1_v2"
 
-TITLE = "One Steel, Five Heat Treatments"
-SUBTITLE = ("Predicting what changes, and why: physics-informed machine learning of microstructure and properties "
-            "of carbon and low-alloy steels")
+TITLE = "Classify, Heat-Treat, Predict: Machine Learning for Steels"
+SUBTITLE = ("One model names a carbon or low-alloy steel, follows it through five heat treatments and predicts its "
+            "microstructure and properties")
 COURSE = ("B.Tech Project (MTP-400A), Autumn 2026 &nbsp; | &nbsp; Department of Metallurgical and Materials "
           "Engineering, Indian Institute of Technology Roorkee")
 AUTHORS = ("Shibasish Banerjee (23118071), Aviral Singh (23118017) &nbsp; | &nbsp; "
@@ -47,8 +47,8 @@ HEADER_H, FOOTER_H = 60.0, 16.0
 TOP = HEADER_H + 5.0
 BOTTOM = PAGE_H - FOOTER_H - 4.0
 GAP = COL_W - 2 * HALF          # gap between two half-width figures
-# reference-poster scale: headings 28, body 20, takeaways 17, captions 16, small print 15; the title is short,
-# so it is set at 50 pt (the template's own title line is 54 pt; the reference poster's longer one was 40 pt)
+# reference-poster scale: headings 28, body 20, takeaways 17, captions 16, small print 15; the title is set
+# at 50 pt and still clears the logo (the template's own title line is 54 pt, the reference poster's 40 pt)
 S_TITLE, S_SUB, S_HDR, S_AUTH, S_HEAD, S_BODY, S_TAKE, S_CAP, S_SMALL = 50, 24, 22, 28, 28, 20, 17, 16, 15
 BLUE, NAVY, INK, PALE, FOOT = "#0070C0", "#1F3973", "#111111", "#E8F1FA", "#F1AA84"
 
@@ -106,6 +106,7 @@ def numbers():
     ks = ks[ks.model == "this work"].set_index("start")
     n["fs_mae"], n["ms_mae"], n["ps_mae"] = ks.MAE_C["ferrite"], ks.MAE_C["martensite"], ks.MAE_C["pearlite"]
     n["start_pts"] = int(ks.n.sum())
+    n["families"] = len(pd.read_csv(RES / "s02_per_category_recall.csv"))
     cl = pd.read_csv(RES / "s02_classifier_cv.csv")
     n["cls_family"] = float(cl[cl.production].steelbench_family_accuracy.iloc[0])
     ex = pd.read_csv(RES / "s02_external_tests.csv").set_index("test")
@@ -131,6 +132,11 @@ def numbers():
     n["assumptions"] = len(pd.read_csv(RES / "s10_assumptions.csv"))
     mc = pd.read_csv(RES / "s11_mcmc_diagnostics.csv")
     n["rhat"], n["ess"] = mc.split_Rhat.max(), mc.ESS.min()
+    tk = pd.read_csv(RES / "s09_tempering_constants.csv").set_index("constant").fitted
+    n["temper_sC"] = tk["s_C"]                       # carbon's effect on fully tempered hardness, HV per % C
+    shifts = tk[["p_Mn", "p_Si", "p_Cr", "p_Mo", "p_V"]]
+    n["temper_slowest"] = {"p_Mn": "manganese", "p_Si": "silicon", "p_Cr": "chromium", "p_Mo": "molybdenum",
+                           "p_V": "vanadium"}[shifts.idxmax()]
     di = pd.read_csv(RES / "s08_ideal_diameter_catalogue.csv")
     di = di[di.category_true != "si_mn"]
     lo, hi = di[di.DI_mm < 40], di[di.DI_mm >= 100]
@@ -185,12 +191,12 @@ ARROW = {
 }
 
 
-def graphical_abstract():
+def graphical_abstract(N):
     steps = [("Inputs", "composition, heat treatment, bar size"),
-             ("Cooling path", "furnace, bar in still air, oil or water quench"),
-             ("Transformation", "Li kinetics, recalibrated on Jominy bands"),
-             ("Microstructure", "ferrite, pearlite, bainite, martensite"),
-             ("Physics + GP", "textbook strength laws; a Gaussian process learns the rest"),
+             ("Classify", f"steel family, one of {N['families']}, or “unknown”"),
+             ("Heat-treat", "cooling path in the furnace, in air or in a quench"),
+             ("Transform", "kinetics give ferrite, pearlite, bainite, martensite"),
+             ("Predict", "textbook strength laws; a Gaussian process learns the rest"),
              ("Properties", "YS, UTS, elongation, hardness, with 90 % intervals")]
     cells = {0: (1, 1), 1: (1, 3), 2: (1, 5), 3: (3, 5), 4: (3, 3), 5: (3, 1)}
     out = ['<div class="ga">']
@@ -235,6 +241,32 @@ def equations():
     return "".join(out)
 
 
+def novelty(N):
+    """What exists today against what this work adds; the left column follows the report's research gap."""
+    rows = [("Commercial tools are closed", "<b>Open:</b> code, data and every number can be rebuilt"),
+            ("Open kinetic models stop at the microstructure",
+             "<b>Goes on to properties,</b> each with a 90 % interval"),
+            ("ML models usually skip the heat treatment",
+             "<b>Five heat treatments</b> and any bar size in one chain"),
+            ("Textbook laws alone, or composition-only ML",
+             f"<b>Physics extrapolates, ML corrects:</b> UTS error {N['an_uts_txt']:.0f} → {N['an_uts']:.0f} MPa"),
+            ("Li kinetics with the published constants",
+             f"<b>Bayesian recalibration</b> on {N['jom_pts']} Jominy points"),
+            ("Assumptions often left implicit",
+             f"<b>{N['assumptions']} assumptions</b> registered and varied; one corrected")]
+    out = ['<div class="nov">',
+           '<div class="nh nl" data-shape="novelty head 1"><div data-tb="novelty head text 1">What exists today</div>'
+           '</div>',
+           '<div class="nh nr" data-shape="novelty head 2"><div data-tb="novelty head text 2">What is new in this '
+           'work</div></div>']
+    for i, (old, new) in enumerate(rows, 1):
+        out.append(f'<div class="nc nl" data-shape="novelty before {i}"><div data-tb="novelty before text {i}">{old}'
+                   f'</div></div><div class="nc nr" data-shape="novelty new {i}"><div data-tb="novelty new text {i}">'
+                   f'{new}</div></div>')
+    out.append("</div>")
+    return "".join(out)
+
+
 # ------------------------------------------------------------------ the page
 def body(N):
     gains = [N["routes"][g] for g, _ in ROUTE_PICK]
@@ -245,10 +277,8 @@ def body(N):
   {bullets([
       f"<b>Heat treatment decides the steel:</b> AISI 4140 is {N['fc4140']:.0f} MPa annealed, {N['ac4140']:.0f} MPa "
       f"normalised and {N['qt4140_lo']:.0f}–{N['qt4140_hi']:.0f} MPa quenched and tempered",
-      f"Handbooks list few conditions; composition-only ML ignores processing; textbook laws err by "
-      f"{N['an_uts_txt']:.0f} MPa",
-      "<b>Aim:</b> predict microstructure and properties, with honest uncertainty, for annealing, normalising, "
-      "hardening, tempering and stress relieving",
+      f"Handbooks list only a few conditions per grade; textbook laws alone err by {N['an_uts_txt']:.0f} MPa",
+      "<b>Aim:</b> predict microstructure and properties with physics-informed machine learning",
       "<b>Our supervisor's question:</b> furnace or air cooling – what changes, how much, and why?",
   ], "intro")}
   {fig_full("routes", "f01_handbook_routes", 1,
@@ -256,8 +286,12 @@ def body(N):
             f"The cooling route alone adds +{min(gains):.0f} to +{max(gains):.0f} MPa")}
 </section>
 <section>
+  <h2 data-tb="heading novelty">Novelty of This Work</h2>
+  {novelty(N)}
+</section>
+<section>
   <h2 data-tb="heading abstract">Graphical Abstract</h2>
-  {graphical_abstract()}
+  {graphical_abstract(N)}
   <h3 data-tb="subheading evidence">Every link tested on data the models never saw</h3>
   {tiles([
       (f"{N['cls_family']:.2f}", f"steel family right, {N['cls_heats']} real heats"),
@@ -277,7 +311,7 @@ def body(N):
     <div class="chain">
       <h3 data-tb="subheading chain">Model chain</h3>
       {bullets([
-          "<b>Steel family:</b> XGBoost, 13 families",
+          f"<b>Steel family:</b> XGBoost, {N['families']} families",
           "<b>Thermodynamics:</b> Ae1, Ae3, Acm, lever rule",
           "<b>Heat flow:</b> furnace, air-cooled bar, quench",
           "<b>Kinetics:</b> Li et al.; bainite recalibrated on Jominy bands (Bayesian)",
@@ -311,20 +345,7 @@ def body(N):
        "Physics + GP halves the textbook-law error"))}
 </section>
 <section class="fine">
-  <h2 data-tb="heading references">References</h2>
-  <div class="refs">
-    {bullets(["M.V. Li et al., Metall. Mater. Trans. B 29, 661 (1998)",
-              "M.A. Grossmann et al., Hardenability of Alloy Steels (1939)",
-              "T. Gladman et al., J. Iron Steel Inst. 210, 916 (1972)",
-              "Ph. Maynier et al., in Hardenability Concepts, AIME (1978)",
-              "J.H. Hollomon, L.D. Jaffe, Trans. AIME 162, 223 (1945)",
-              "D.M. Collins et al., Metals 13, 1168 (2023)"], "references 1", "ref")}
-    {bullets(["N. Birbilis et al., Mendeley Data, doi:10.17632/jmwb9ddd43.1 (2025)",
-              "J. Lei et al., J. Am. Stat. Assoc. 113, 1094 (2018)",
-              "ASTM A255 (hardenability); ASM Handbook, Vol. 1 (1990)",
-              "Metallus, Practical Data for Metallurgists (2024)"], "references 2", "ref")}
-  </div>
-  <h2 data-tb="heading acknowledgements" class="ackh">Acknowledgements</h2>
+  <h2 data-tb="heading acknowledgements">Acknowledgements</h2>
   <p class="ack" data-tb="acknowledgements"><span class="par">We thank Dr. Anish Karmakar for the question behind
   this work and for always asking how we knew a result was true, and the authors who shared their data openly.
   Code and data: <b>{REPO}</b></span>
@@ -385,7 +406,7 @@ def body(N):
        "The mass effect follows from the quench heat flow"))}
 </section>
 <section>
-  <h2 data-tb="heading conclusion">Conclusion and Future Work</h2>
+  <h2 data-tb="heading conclusion">Conclusions</h2>
   {bullets([
       f"{k('Furnace vs air:')} low-C steels barely change (+{N['gain_low']:.0f} MPa); medium and high C gain "
       f"+{N['gain_med']:.0f} and +{N['gain_high']:.0f} MPa from finer pearlite",
@@ -393,12 +414,26 @@ def body(N):
       f"{k('One chain, five treatments:')} unseen-grade UTS within {N['an_uts']:.0f} MPa (annealed, normalised) and "
       f"{N['qt_uts']:.0f} MPa (quenched + tempered); 90 % intervals hold {100 * N['an_cov']:.1f} % and "
       f"{100 * N['qt_cov']:.0f} %",
-      f"{k('Audited:')} {N['assumptions']} assumptions registered, the uncertain ones varied; one was wrong (handbook "
-      f"bars are 25 mm, not 50 mm) and was corrected",
+      f"{k('Recovered from data:')} tempering fades carbon's effect; {N['temper_slowest']} delays softening most",
+      f"{k('Also built:')} precipitation strengthening, embrittlement and TMCP flags, route advice",
       f"{k('Limits:')} {N['di_ratio']:.1f}× too hardenable vs Grossmann's ideal diameter; kinetic error is structural "
-      f"(MCMC); stress relief untested",
-      f"{k('Future work:')} lab tests of Indian grades (EN3B to EN42) against predictions fixed in advance",
+      f"(MCMC); stress relief not tested (no open data)",
   ], "conclusion")}
+</section>
+<section class="fine">
+  <h2 data-tb="heading references">References</h2>
+  <div class="refs">
+    {bullets(["M.V. Li et al., Metall. Mater. Trans. B 29, 661 (1998)",
+              "M.A. Grossmann et al., Hardenability of Alloy Steels (1939)",
+              "T. Gladman et al., J. Iron Steel Inst. 210, 916 (1972)",
+              "Ph. Maynier et al., in Hardenability Concepts, AIME (1978)",
+              "J.H. Hollomon, L.D. Jaffe, Trans. AIME 162, 223 (1945)",
+              "D.M. Collins et al., Metals 13, 1168 (2023)"], "references 1", "ref")}
+    {bullets(["N. Birbilis et al., Mendeley Data, doi:10.17632/jmwb9ddd43.1 (2025)",
+              "J. Lei et al., J. Am. Stat. Assoc. 113, 1094 (2018)",
+              "ASTM A255 (hardenability); ASM Handbook, Vol. 1 (1990)",
+              "Metallus, Practical Data for Metallurgists (2024)"], "references 2", "ref")}
+  </div>
 </section>
 """
     return nbsp(left), nbsp(right)
@@ -480,10 +515,17 @@ p { margin: 0; }
 .eq { font-family: Cambria, "STIX Two Text", "Times New Roman", serif; font-size: 19pt; line-height: 1.34;
   white-space: nowrap; }
 .eq sub, .eq sup { font-size: 68%%; line-height: 0; }
+/* novelty table */
+.nov { display: grid; grid-template-columns: 0.82fr 1fr; column-gap: 2mm; row-gap: 1.1mm; }
+.nov > div { border-radius: 1.6mm; padding: 1.2mm 3mm 1.3mm; font-size: %(S_TAKE)spt; line-height: 1.14; }
+.nh { font-weight: bold; }
+.nh.nl { background: #D9D9D5; color: #333333; }
+.nh.nr { background: %(BLUE)s; color: #FFFFFF; }
+.nc.nl { background: #F1F1EE; color: #52514E; }
+.nc.nr { background: %(PALE)s; }
 /* small print */
 .fine h2 { margin-bottom: 1.4mm; }
 .refs { display: grid; grid-template-columns: 1fr 1fr; column-gap: 6mm; }
-.ackh { margin-top: 3.6mm; }
 ul.bl.ref { font-size: %(S_SMALL)spt; line-height: 1.12; }
 ul.bl.ref li { padding-left: 3.6mm; margin-bottom: 0.5mm; }
 .ack { font-size: %(S_SMALL)spt; line-height: 1.14; }

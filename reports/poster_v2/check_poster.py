@@ -124,6 +124,8 @@ def numbers_table(N):
             ("mostly bainite + martensite in air: D_I < 40 mm, D_I >= 100 mm",
              f"{N['di_lo'][0]} of {N['di_lo'][1]}, {N['di_hi'][0]} of {N['di_hi'][1]}", "s08_ideal_diameter_catalogue.csv"),
             ("Spearman, D_I vs UTS gain on air cooling", N["di_rho"], "s08_ideal_diameter_catalogue.csv"),
+            ("fully tempered hardness per % C (HV); slowest softening with",
+             f"{N['temper_sC']:.0f}; {N['temper_slowest']}", "s09_tempering_constants.csv"),
             ("assumptions in the register", N["assumptions"], "s10_assumptions.csv"),
             ("handbook = 25 mm bars: grades within 3 MPa", f"{N['hm_within']} of {N['hm_grades']}",
              "s10_handbook_section_match.csv")]
