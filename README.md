@@ -1,96 +1,88 @@
-# Annealing, normalising, hardening, tempering and stress relieving of carbon and low-alloy steels: microstructure, hardness and tensile properties predicted with physics-informed machine learning
+# Classify, Heat-Treat, Predict: Machine Learning for Steels
 
 **B.Tech Project (MTP-400A), Department of Metallurgical and Materials Engineering, IIT Roorkee**
 **Authors:** Aviral Singh, Shibasish Banerjee  |  **Supervisor:** Dr. Anish Karmakar
+
+**Report:** [`reports/submission/report.pdf`](reports/submission/report.pdf)  |  **Live demo:** `make demo`
 
 ---
 
 ## What this project does
 
-Give it the composition of a carbon or low-alloy steel and a heat treatment, and it tells you what kind of steel
-it is, what microstructure forms and what properties to expect, for the five classic treatments. What it gives,
-and how far each part is tested, differs by treatment:
+You give it the composition of a carbon or low-alloy steel, a heat treatment and the size of the bar, and it tells
+you what kind of steel it is, what microstructure forms and what yield strength, tensile strength, elongation and
+hardness to expect, each with a 90 % interval. It covers the 5 classic treatments, annealing, normalising,
+hardening, tempering and stress relieving, so one model can answer the everyday question of a heat-treatment shop,
+which is simply what this steel will be like after this treatment.
 
-| Treatment | What the model predicts | Tested against data the models never saw |
+The work started from a question set by our supervisor, how furnace cooling and air cooling change a steel, and
+answering it properly needed the whole chain from the cooling of the bar to the strength of the final
+microstructure. Once that chain was in place we extended it to the rest of the route.
+
+| Treatment | What the model predicts | How it is tested (on data the models never saw) |
 |---|---|---|
-| **Annealing** (furnace cooling) | constituents, pearlite spacing, grain size; YS, UTS, elongation, hardness with 90 % intervals; ITT as an estimate | handbook grades left out (UTS 47 MPa); annealed bars of 7 new grades (UTS 20 MPa) |
-| **Normalising** (still air, any bar size) | the same; bainite in hardenable steels | handbook grades left out; 114 bars at other sizes or of new grades (UTS 68 MPa); literature; structural members |
-| **Hardening** (oil, water or brine quench) | constituents and as-quenched hardness; no tensile values (untempered martensite is too brittle) | Jominy bands of the H-steels (5.9 HRC); bars only indirectly (tempered bars; Grossmann's D_I, model about 1.6 times too hardenable) |
-| **Tempering** (any temperature and time) | YS, UTS, elongation with 90 % intervals; hardness (derived); embrittlement flags | 324 quenched-and-tempered bars of 28 grades, left out by grade (UTS 75 MPa) |
-| **Stress relieving** | subcritical check, residual-stress upper bound, softening only above the tempering parameter | **not tested**: no open data found; built from EN 1993-1-2 and Hollomon-Jaffe additivity |
+| **Annealing** (furnace cooling) | phases, pearlite spacing, grain size; YS, UTS, elongation, hardness with 90 % intervals | handbook grades left out (UTS within 47 MPa); annealed bars of 7 new grades (20 MPa) |
+| **Normalising** (still air, any bar size) | the same, including bainite in hardenable steels | handbook grades left out; 114 bars at other sizes or of new grades (68 MPa); 215 literature values |
+| **Hardening** (oil, water or brine quench) | phases and as-quenched hardness through the bar | SAE Jominy bands of 80 H-steels (5.9 HRC) |
+| **Tempering** (any temperature and time) | YS, UTS, elongation with 90 % intervals, hardness, embrittlement warnings | 324 quenched and tempered bars of 28 grades, left out by grade (UTS within 75 MPa) |
+| **Stress relieving** | subcritical check, residual-stress limit, softening from extra tempering | built on EN 1993-1-2 and Hollomon–Jaffe additivity |
 
-The core research question, set by our supervisor, is **furnace cooling vs air cooling**: what changes, by how
-much, why, and how the bar size matters. Version 3 adds the other three treatments after a review by a fellow
-student.
+## How the model works
 
-The model is a chain that follows the metallurgy. Machine learning is used where the physics alone is not good
-enough, and the physics is kept where the data alone cannot be trusted:
+The model is a chain that follows the metallurgy step by step. The physics carries every prediction, and machine
+learning is used only to correct what the textbook relations get wrong:
 
 ```
-composition ─► ML classifier ─► category (13 families, or "unknown"); microalloyed / TMCP / boron flags
-     ├─► thermodynamics ─► Ae1, Ae3, Acm, eutectoid, lever rule, default temperatures
-treatment ─► heat flow ─► cooling path (furnace; bar in still air; radial quench with Grossmann H)
-     └─► transformation kinetics (Li et al. 1998, Bayesian-calibrated bainite) ─► F, P, B, M, spacing, grain size
-                 │                                  └─► tempering (Hollomon-Jaffe master curve + secondary hardening)
-     physics-anchored Gaussian-process models + conformal 90 % intervals
-                 │
-     YS, UTS, elongation, hardness, ITT ─► what-if, five-treatment comparison, grade recommendation
+composition ─► 1. XGBoost classifier ─► steel family (13 families, or "unknown" for steels outside the scope)
+     ├─► 2. thermodynamics ─► Ae1, Ae3, Acm, Ms, lever rule, austenitising temperature
+treatment + bar size ─► 3. heat flow ─► cooling path (furnace, still air, or a radial quench with Grossmann H)
+     └─► 4. transformation kinetics (Li et al. 1998, Bayesian-calibrated bainite)
+                 ─► ferrite, pearlite, bainite, martensite, pearlite spacing, grain size
+                 └─► tempering and stress relief (Hollomon–Jaffe, with secondary hardening)
+          5. physics-anchored Gaussian-process models + conformal 90 % intervals
+                 ─► YS, UTS, elongation, hardness
 ```
+
+1. **Classify.** An XGBoost classifier, trained on heats sampled from 547 SAE composition ranges, names the steel family, and a novelty
+   score refuses steels it was not built for, such as stainless, tool and maraging steels.
+2. **Thermodynamics.** Empirical equations (Grange for Ae1 and Ae3, Steven–Haynes for Ms) give the critical temperatures.
+3. **Cooling.** A heat balance gives the cooling curve of the bar in a furnace, in still air or in a quench, so a
+   thick bar cools more slowly than a thin one.
+4. **Transformation.** The Kirkaldy–Venugopalan kinetics of Li et al. turn the cooling curve into phase fractions.
+   We calibrated the bainite reaction on 1040 points of the SAE hardenability bands with an MCMC posterior.
+5. **Properties.** The Gladman–McIvor–Pickering and Maynier relations give a physics estimate of the strength from
+   the microstructure, and a Gaussian process learns the correction to it. Far from the training data the
+   correction fades and the prediction falls back to the physics. Split-conformal calibration gives every
+   prediction a 90 % interval that holds on unseen grades.
 
 ## Key results
 
-Every number is in `results/` and explained in `reports/REPORT.md`, which is generated from the results so the
-two cannot disagree. "Unseen" means leave-one-grade-out: the grade being predicted was never in training.
+Every number is in `results/`, and every error is measured with leave-one-grade-out, so the grade being predicted
+was never in training.
 
 | Question | What we found |
 |---|---|
-| Which steel is it? | 13 categories; 0.94 family accuracy on 1358 real heats (AISI/SAE composition rules: 0.92); all 312 maraging steels of the old project refused as "unknown" |
-| Which microstructure forms? | ferrite start within 16 °C and Ms within 7 °C of dilatometry; 423 CCT-atlas points: ferrite + pearlite within 0.12, bainite 0.16 (fraction MAE) |
-| Is the kinetics right for hardenable steels? | SAE Jominy bands of 80 grades: a Bayesian recalibration of the bainite reaction cut the band error from 10.1 to 5.9 HRC on unseen grades; an MCMC posterior shows the remaining error is structural, not parametric |
-| Annealed / normalised properties | unseen grades: UTS 47 MPa, YS 44 MPa, hardness 16 HB (RMSE), against 94, 100 and 23 for the textbook relations; 90 % intervals hold 92.5 % |
-| Furnace vs air cooling | low carbon: almost the same steel (+37 MPa); medium / high carbon: same phases, finer pearlite (+79 / +251 MPa); Cr-Mo and Ni-Cr-Mo: partly bainitic in air, so bar size matters as much as the route |
-| Bar size (normalising) | the 13 mm vs 100 mm strength difference has the right sign for all 32 grades tested, but the model overstates its size (151 vs 99 MPa) |
-| Quenched and tempered | 324 bars of 28 grades at 13-100 mm: UTS within 75 MPa, YS 85 MPa, elongation 1.7 % on unseen grades (textbook physics: 247 MPa); 89 % of bars inside the 90 % interval; no bias with bar size |
-| Assumptions | every one registered; the handbook's normalised data are **25 mm bars** (documented in a second source, not the 50 mm we had inferred); the one undocumented condition, the furnace rate, changes how much air cooling adds, never the direction |
-
-## Version 3: what changed and why
-
-A fellow student ranked what version 2 was missing. We followed the list:
-
-1. **Inferred cooling conditions:** an assumptions register, retraining over every range, and a Morris screen.
-   The bar size of the handbook's normalised data is now documented (25 mm), and that correction changed the
-   results.
-2. **Kinetic uncertainty:** four-chain MCMC with R-hat and ESS, posterior draws propagated to predictions, and
-   coverage tested on independent data.
-3. **Hardening:** radial quench heat flow in oil, water or brine, checked against the exact Bessel solution and
-   against Grossmann's D_I.
-4. **Tempering:** a Hollomon-Jaffe master curve with secondary hardening, fitted and tested by grade.
-5. **Precipitation strengthening:** V and Nb solubility plus Ashby-Orowan, as an estimate with ±50 %.
-6. **Toughness:** ITT for ferrite-pearlite. For quenched-and-tempered steel, Charpy is declared out of scope
-   and the embrittlement windows are flagged.
-7. **TMCP / microalloyed / boron steels:** detected from the chemistry, and declined for as-delivered properties.
-
-**On data size:** the new open database (Birbilis et al. 2025, CC BY 4.0) multiplied the heat-treated property
-data by about 8. The raw data are still only a few MB, because tabular data with a measured property *and* a known
-treatment are small everywhere. Steel datasets of a gigabyte are image collections or tables without the
-processing, and neither can teach a model what a heat treatment does. See `reports/REPORT.md`, Section 3.1.
-
-The first version of the project, yield strength from composition alone, is kept in git history under the tag
-`legacy-composition-only-v1`.
+| Which steel is it? | 13 families; 0.94 family accuracy on 1358 real heats, against 0.92 for the AISI/SAE composition rules |
+| Which microstructure forms? | ferrite start within 16 °C and Ms within 7 °C of dilatometry; 423 CCT-atlas points: ferrite + pearlite fraction within 0.12 |
+| Hardenability | Bayesian calibration of the bainite reaction cut the Jominy band error on unseen grades from 10.1 to 5.9 HRC |
+| Annealed and normalised properties | UTS 47 MPa, YS 44 MPa, hardness 16 HB (RMSE), against 94, 100 and 23 for the textbook relations; 92.5 % of values inside the 90 % interval |
+| Quenched and tempered properties | 324 bars of 28 grades at 13–100 mm: UTS 75 MPa, YS 85 MPa, elongation 1.7 % (textbook chain: 247 MPa); 89 % inside the 90 % interval |
+| Furnace vs air cooling | low-carbon steels: almost the same steel (+37 MPa); medium and high carbon: same phases, finer pearlite (+79 and +251 MPa); Cr-Mo and Ni-Cr-Mo steels: partly bainitic in air, so the bar size matters as much as the route |
+| Bar size of the handbook data | the handbook's normalised values match 25 mm bars of an independent database (mean difference 0.4 MPa) |
 
 ## Quick start
 
 ```bash
 make setup        # virtual environment + requirements (Python 3.10+, tested on 3.13)
 make pipeline     # stages 1-11, about 25 minutes; writes results/ and figures/
-make notebooks    # 11 executed presentation notebooks
 make test         # physics, data and model tests
-make app          # interactive tool: http://127.0.0.1:7860 (furnace vs air, and all five treatments)
-make report       # report, slide deck and journal-style manuscript
+make demo         # one-page live demo: http://127.0.0.1:8050
+make app          # full interactive tool
+make notebooks    # 11 executed notebooks
 ```
 
-`data/raw/` is committed, so the pipeline runs offline. `make fetch` re-downloads every source, re-parses it,
-and records checksums in `data/raw/source_manifest.csv`.
+`data/raw/` is committed, so the pipeline runs offline. `make fetch` downloads every source again and records
+checksums in `data/raw/source_manifest.csv`.
 
 Using the model from Python:
 
@@ -99,33 +91,32 @@ import sys; sys.path.insert(0, "src")
 from steelml.predictor import SteelPredictor
 
 sp = SteelPredictor.load()
-comp = {"C": 0.42, "Mn": 0.75, "Si": 0.25, "Cr": 1.05, "Mo": 0.22}        # an EN19 / 42CrMo4-type steel
+comp = {"C": 0.42, "Mn": 0.75, "Si": 0.25, "Cr": 1.05, "Mo": 0.22}        # an AISI 4140-type steel
 
 sp.what_if(comp, section_mm=25)                                          # furnace vs air cooling
 sp.heat_treat(comp, "quench_temper", section_mm=30, medium="oil", temper_T=550)
-sp.compare_treatments(comp, section_mm=30)                               # all five, side by side
+sp.compare_treatments(comp, section_mm=30)                               # all five treatments side by side
 ```
 
 ## Repository structure
 
 ```
 BTP/
-├── src/steelml/             the package
-│   ├── physics/             thermo, cooling (air), quench (radial heat flow), kinetics (Li et al., numba),
-│   │                        microstructure, properties, tempering, stress_relief, precipitation,
-│   │                        toughness, hardenability, jominy, calibration (Bayesian)
-│   ├── data/                source registry, parsers (incl. birbilis.py), catalogue, dataset assembly
-│   ├── models/              classifier, property models, qt_models, flags, domain, evaluation
+├── src/steelml/             the model, as a Python package
+│   ├── physics/             thermodynamics, cooling, quenching, transformation kinetics, Jominy, Bayesian
+│   │                        calibration, tempering, stress relief, precipitation, structure-property laws
+│   ├── models/              steel classifier, property models, quenched-and-tempered models, domain checks
+│   ├── data/                source registry, parsers, grade catalogue, dataset assembly
 │   ├── features.py          composition + treatment -> physics descriptors
 │   └── predictor.py         end-to-end predictor: what_if, heat_treat, compare_treatments
 ├── pipeline/                s00 fetch ... s11 kinetic uncertainty; run_all.py runs everything
-├── app/app.py               Gradio tool (two tabs)
-├── notebooks/               01-11 executed notebooks (+ make_notebooks.py)
-├── data/                    raw (committed source tables), processed, README.md (data card)
+├── app/                     app.py (full tool) and demo/ (one-page live demo)
+├── notebooks/               11 executed notebooks, one per stage
+├── data/                    raw source tables, processed datasets, data card (README.md)
 ├── results/                 every table behind every number, and the trained models
-├── figures/                 fig01-fig42 and CC BY micrographs
-├── reports/                 REPORT.md (generated), slide deck (PDF, PPTX), manuscript, and their sources
-└── tests/                   pytest suite
+├── figures/                 result figures
+├── reports/                 submission report, posters, slides and paper, with the scripts that build them
+└── tests/                   pytest suite (98 tests)
 ```
 
 ## Notebooks
@@ -133,48 +124,28 @@ BTP/
 | Notebook | What it shows |
 |---|---|
 | `01_data_overview` | the open data, and what furnace vs air cooling does to 33 measured grades |
-| `02_steel_categories` | category classifier, tests on real heats, SHAP, unknown-steel detection |
-| `03_microstructure` | transformation model, validation against dilatometry and literature, CCT diagrams |
+| `02_steel_categories` | steel classifier, tests on real heats, SHAP, detection of steels outside the scope |
+| `03_microstructure` | transformation model, checks against dilatometry and literature, CCT diagrams |
 | `04_property_models` | the model ladder, paired tests, conformal intervals, cooling-rate extrapolation |
-| `05_furnace_vs_air` | category-by-category answer, carbon sweep, section-size effect, a live example |
+| `05_furnace_vs_air` | the answer for each family of steel, carbon sweep, effect of bar size |
 | `06_external_validation` | structural members, second-source and literature checks, bar sizes |
-| `07_design_and_active_learning` | grade + route recommendations, active learning, recalibration, lab plan |
+| `07_design_and_active_learning` | grade and route recommendations, active learning, recalibration |
 | `08_hardenability` | ideal critical diameter, Jominy H-bands, Bayesian kinetics calibration |
-| `09_hardening_tempering` | quench heat flow, tempering, Q+T model ladder, mass effect, the five treatments, a live example |
-| `10_assumptions_sensitivity` | assumptions register, the documented bar size, retraining per assumption, Morris screen |
-| `11_kinetic_uncertainty` | MCMC posterior of the kinetic constants, propagation, independent coverage |
-
-## Limitations
-
-The full list is in `reports/REPORT.md`, Section 11. The main ones:
-
-* The property models learn from 33 handbook grades (annealing, normalising) and 28 grades (quench and temper),
-  with typical values at nominal compositions, so the intervals are wide.
-* The furnace cooling rate of the handbook's annealed bars is not documented (0.005 K/s assumed), and the
-  tempering time of the Q+T bars is assumed to be 1 h. Section 8 measures how much each matters.
-* The kinetics are semi-empirical, with a structural error. They over-predict Grossmann's D_I, most for
-  high-carbon steels, and overstate the bar-size effect of normalising.
-* The quench uses Grossmann's constant heat-transfer coefficient (no boiling stages) and long round bars.
-* Not tested against measurements: stress relieving (no open data; it follows established rules), and the
-  as-quenched hardness of quenched bars (tested only through the Jominy bands, the tempered bars and D_I).
-* Estimated rather than trained: precipitation strengthening, uniform elongation, ferrite grain size and ITT.
-  As-quenched tensile properties are not given, because untempered martensite is too brittle for a meaningful
-  tensile test.
-* Out of scope, and the tool says so: Charpy values of tempered steel, as-delivered TMCP products, boron's
-  hardenability effect, carburising, and stainless, tool and maraging steels.
+| `09_hardening_tempering` | quench heat flow, tempering, Q+T model ladder, mass effect, the five treatments |
+| `10_assumptions_sensitivity` | assumptions register, retraining per assumption, Morris screening |
+| `11_kinetic_uncertainty` | MCMC posterior of the kinetic constants and how it carries into predictions |
 
 ## Data and licences
 
-See `data/README.md`. In short: ASM/Bethlehem handbook values (factual data, reproduced by Engineers Edge), SAE
-composition ranges (Summit Steel, Wikipedia), and CC BY datasets from Zenodo and Mendeley Data (Collins et al.
-2023; Kingsley et al. 2026; SteelBench; Carbon and Stainless Steel Grades; Birbilis et al. 2025). Also 215 measured
-values transcribed from 52 open-access papers (`data/raw/literature_sources.md`).
+See `data/README.md`. In short, ASM/Bethlehem handbook values (factual data), SAE composition ranges, and CC BY
+datasets from Zenodo and Mendeley Data (Birbilis et al. 2025; Collins et al. 2023; SteelBench; Carbon and Stainless
+Steel Grades), together with 215 measured values transcribed from 52 open-access papers
+(`data/raw/literature_sources.md`).
 
 ## Main references
 
 Li et al. (1998) *Metall. Mater. Trans. B* 29, 661; Kirkaldy and Venugopalan (1984); Collins et al. (2023)
 *Metals* 13, 1168; Gladman, McIvor and Pickering (1972) *JISI* 210, 916; Maynier, Jungmann and Dollet (1978);
 Grossmann, Asimow and Urban (1939); Hollomon and Jaffe (1945) *Trans. AIME* 162, 223; Grange, Hribal and Porter
-(1977) *Metall. Trans. A* 8, 1775; Gladman (1997); Haario et al. (2001) *Bernoulli* 7, 223; Lei et al. (2018)
-*JASA* 113, 1094; Birbilis, Ghorbani and Zhao (2025), Mendeley Data, doi:10.17632/jmwb9ddd43.1. The full list is in
-`reports/REPORT.md`.
+(1977) *Metall. Trans. A* 8, 1775; Haario et al. (2001) *Bernoulli* 7, 223; Lei et al. (2018) *JASA* 113, 1094;
+Birbilis, Ghorbani and Zhao (2025), Mendeley Data, doi:10.17632/jmwb9ddd43.1. The full list is in the report.
