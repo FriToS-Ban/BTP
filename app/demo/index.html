@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en" data-radius="sharp">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Machine learning for steels · live demo</title>
+<!--
+  Look dealt with tasteskill 2.5 (start.mjs deal --page software): palette "teal-on-paper", pairing "host"
+  (Host Grotesk + JetBrains Mono), radius sharp. The demo must run offline, so the stacks fall back to the
+  nearest faces on the machine (Helvetica Neue, SF Mono) when the dealt fonts are not installed.
+  Data colours (furnace blue, air orange, treatment colours) are the poster's, so the two read alike.
+-->
+<style>
+  :root {
+    --bg: #f7f9f8; --surface: #ebf0ee; --panel: #ffffff; --ink: #06525c; --muted: #2f737d; --text: #12302f;
+    --line: rgba(6, 82, 92, .14); --line-strong: rgba(6, 82, 92, .32); --action: #06525c; --action-ink: #f7f9f8;
+    --fc: #2a78d6; --ac: #eb6834; --hard: #e34948; --qt: #6250d6; --sr: #8a8983;
+    --F: #dce3e3; --P: #7f9396; --B: #1baf7a; --M: #eda100; --C: #6b5443;
+    --font-text: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+    --r-md: 6px; --r-sm: 4px;
+    --m-in: 140ms; --m-out: 200ms; --m-press: 90ms; --m-ease: cubic-bezier(.2, .8, .2, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--font-text); -webkit-font-smoothing: antialiased; }
+  .num, output, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .fig { font-family: var(--font-text); font-variant-numeric: tabular-nums; }
+  button { font: inherit; color: inherit; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
+  button:focus:not(:focus-visible) { outline: none; }
+
+  /* header */
+  header { height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 0 32px; border-bottom: 1px solid var(--line); background: var(--bg); }
+  .brand { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; overflow: hidden; }
+  .brand b { font-size: 18px; font-weight: 500; letter-spacing: -0.02em; color: var(--ink); }
+  .brand span { color: var(--muted); font-size: 14px; }
+  .status { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--B); transition: background var(--m-out); }
+  .status.busy i { background: var(--M); }
+
+  /* layout: control column + results */
+  .app { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: calc(100vh - 56px); }
+  aside { background: var(--surface); border-right: 1px solid var(--line); padding: 20px 24px 24px; }
+  .ctl { margin-bottom: 16px; }
+  .ctl > .lab, .lab { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin: 0 0 8px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; }
+  .row output { font-size: 14px; color: var(--ink); }
+  select, input[type=number] { width: 100%; height: 38px; font: inherit; color: var(--text); padding: 0 10px;
+    border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--panel);
+    transition: border-color var(--m-in) var(--m-ease), box-shadow var(--m-in) var(--m-ease); }
+  select:hover, input[type=number]:hover { border-color: var(--ink); }
+  select:focus, input[type=number]:focus { border-color: var(--action); box-shadow: 0 0 0 3px rgba(6, 82, 92, .14); outline: none; }
+  input[type=number] { font-family: var(--font-mono); font-size: 14px; }
+  .picks { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 14px; }
+  .picks span { color: var(--muted); }
+  .chip { border: 0; background: none; padding: 0; cursor: pointer; color: var(--ink);
+    background-image: linear-gradient(var(--ink), var(--ink)), linear-gradient(var(--line-strong), var(--line-strong));
+    background-size: 0% 1px, 100% 1px; background-position: 0 100%, 0 100%; background-repeat: no-repeat;
+    transition: background-size var(--m-out) var(--m-ease); }
+  .chip:hover { background-size: 100% 1px, 100% 1px; }
+  .chip.on { font-weight: 600; background-size: 100% 2px, 100% 1px; }
+  .comp { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 8px; }
+  .comp label span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input[type=range] { width: 100%; accent-color: var(--action); margin: 6px 0 0; }
+  .group { border-top: 1px solid var(--line); padding-top: 14px; }
+  .group h3 { margin: 0 0 10px; font-size: 14px; font-weight: 500; color: var(--ink); }
+  .group h3 span { color: var(--muted); font-weight: 400; }
+  .tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--line); }
+  .tabs button { border: 0; background: none; padding: 0 0 8px; cursor: pointer; color: var(--muted);
+    box-shadow: inset 0 -2px 0 transparent; transition: color var(--m-in) var(--m-ease), box-shadow var(--m-out) var(--m-ease); }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button.on { color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--ink); }
+  .tabs button:active { transform: translateY(1px); }
+  .cistrip { position: sticky; top: 0; z-index: 20; background: var(--bg); padding: 10px 32px 12px;
+    border-bottom: 1px solid var(--line-strong); box-shadow: 0 6px 16px rgba(6, 82, 92, .06); }
+  .cistrip .ttl { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .cistrip .ttl b { color: var(--ink); font-weight: 600; }
+  #ci { display: grid; grid-template-columns: repeat(5, minmax(178px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 2px; }
+  .cirow { font-size: 13px; border-left: 3px solid var(--c); padding-left: 9px; line-height: 1.45; }
+  .cirow b { display: block; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cirow .rng { position: relative; height: 6px; margin: 4px 0 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 2px; }
+  .cirow .rng .band { position: absolute; top: 0; bottom: 0; background: var(--c); opacity: .4; transition: left .3s var(--m-ease), width .3s var(--m-ease); }
+  .cirow .rng .mid { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--c); transition: left .3s var(--m-ease); }
+  .cirow .pl { display: flex; justify-content: space-between; gap: 6px; white-space: nowrap; }
+  .cirow .pl span { color: var(--muted); }
+  .cirow .pl .num { color: var(--ink); }
+  .cirow .pl small { color: var(--muted); font-size: 12.5px; }
+  .cirow .lim { color: var(--muted); }
+  .hint { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 20px 0 0; }
+
+  /* results */
+  .out { padding: 24px 32px 32px; min-width: 0; }
+  h2 { margin: 0; font-size: 15px; font-weight: 500; color: var(--muted); }
+  h2 b { color: var(--ink); font-weight: 600; margin-right: 6px; }
+  .steel { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap;
+    padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .fam { font-size: 28px; font-weight: 500; letter-spacing: -0.025em; color: var(--ink); margin: 4px 0 2px; line-height: 1.1; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .warn { display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: var(--r-sm); background: #fff3d6;
+    color: #7a5200; font-size: 13px; }
+  .facts { display: grid; grid-template-columns: repeat(4, auto); gap: 0 32px; margin: 0; }
+  .facts div { border-left: 1px solid var(--line); padding-left: 12px; }
+  .facts dt { font-size: 13px; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 18px; color: var(--ink); }
+  .bar2 { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin: 14px 0 12px; }
+  .bar2 .tabs { border-bottom: 0; }
+
+  /* furnace vs air */
+  .routes { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: var(--r-md);
+    background: var(--panel); overflow: hidden; }
+  .route { padding: 14px 22px 13px; border-top: 3px solid var(--c); }
+  .route + .route { border-left: 1px solid var(--line); }
+  .rh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .rh b { font-size: 16px; font-weight: 600; color: var(--ink); }
+  .rh span { color: var(--muted); font-size: 13px; text-align: right; }
+  .ms { display: flex; height: 14px; border-radius: 2px; overflow: hidden; margin: 12px 0 7px; background: var(--surface); }
+  .ms i { display: block; height: 100%; transition: width .35s var(--m-ease); }
+  .legend { display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 13px; color: var(--text); min-height: 20px; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 1px; margin-right: 6px; }
+  .uts { margin-top: 10px; display: flex; align-items: baseline; gap: 10px; }
+  .uts b { font-size: 36px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--ink); }
+  .uts span { color: var(--muted); font-size: 14px; }
+  .ci { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .props { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 0; padding-top: 10px;
+    border-top: 1px solid var(--line); }
+  .props dt { font-size: 13px; color: var(--muted); }
+  .props dd { margin: 2px 0 0; font-size: 16px; color: var(--ink); }
+  .props dd small { font-size: 13px; color: var(--muted); }
+  .extra { color: var(--muted); font-size: 13px; margin-top: 9px; }
+  .lower { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 0; margin-top: 14px;
+    border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); overflow: hidden; }
+  .cct { padding: 14px 14px 12px 8px; }
+  .cct svg { width: 100%; height: auto; display: block; }
+  .cap { color: var(--muted); font-size: 13px; margin: 4px 8px 0 14px; line-height: 1.45; }
+  .change { padding: 14px 22px 14px; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .change .big { font-size: 36px; font-weight: 500; letter-spacing: -0.03em; color: var(--ink); line-height: 1; margin: 8px 0 2px; }
+  .change .big small { font-size: 16px; color: var(--muted); letter-spacing: 0; margin-left: 4px; }
+  .change .head { font-weight: 600; font-size: 15px; color: var(--ink); margin: 10px 0 4px; }
+  .change p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
+  .deltas { display: grid; grid-template-columns: repeat(3, auto); gap: 0 16px; justify-content: start; font-size: 13px; margin: 0; }
+  .deltas div { display: flex; flex-direction: column; }
+  .deltas dt { color: var(--muted); }
+  .deltas dd { margin: 0; color: var(--ink); }
+  .caut { margin-top: auto; padding-top: 12px; font-size: 13px; color: #7a5200; }
+
+  /* five treatments */
+  .five { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); padding: 6px 22px 12px; }
+  .trow { display: grid; grid-template-columns: 180px minmax(0, 1fr) 200px; gap: 20px; align-items: center;
+    padding: 14px 8px; margin: 0 -8px; border-bottom: 1px solid var(--line); border-radius: var(--r-sm); }
+  .trow:last-of-type { border-bottom: 0; }
+  .trow.flash { animation: flash 1.4s var(--m-ease); }
+  @keyframes flash { 0% { background: rgba(6, 82, 92, .09); } 100% { background: transparent; } }
+  .tname b { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--ink); }
+  .tname b i { width: 10px; height: 10px; border-radius: 2px; background: var(--c); flex: none; }
+  .tname span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; padding-left: 18px; }
+  .tmicro { font-size: 13px; color: var(--text); margin-bottom: 6px; }
+  .track { position: relative; height: 20px; }
+  .track .fill { position: absolute; left: 0; top: 3px; height: 14px; border-radius: 2px; background: var(--c); transition: width .35s var(--m-ease); }
+  .track .wh { position: absolute; top: 10px; height: 1.5px; background: var(--ink); }
+  .track .wh::before, .track .wh::after { content: ""; position: absolute; top: -5px; width: 1.5px; height: 11px; background: var(--ink); }
+  .track .wh::before { left: 0; } .track .wh::after { right: 0; }
+  .track .val { position: absolute; top: 0; font-size: 14px; color: var(--ink); white-space: nowrap; }
+  .track.brittle { border: 1.5px dashed var(--hard); background: #fdf0ef; border-radius: 2px; display: flex; align-items: center;
+    justify-content: center; font-size: 13px; color: var(--text); }
+  .tprops { font-size: 13px; color: var(--text); text-align: right; line-height: 1.6; }
+  .tprops span { color: var(--muted); }
+  .fhead { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0 4px; }
+  .fhead b { color: var(--ink); font-weight: 600; }
+  .fhead span { color: var(--muted); font-size: 13px; }
+  .notes { margin: 6px 0 2px; padding: 10px 0 0; list-style: none; border-top: 1px solid var(--line); }
+  .notes li { font-size: 13px; color: var(--text); padding: 3px 0 3px 16px; position: relative; }
+  .notes li::before { content: ""; position: absolute; left: 2px; top: 11px; width: 6px; height: 1.5px; background: var(--muted); }
+  .notes li.w { color: #7a5200; }
+  .notes li.w::before { background: var(--M); }
+  .refuse { margin-top: 22px; padding: 22px 24px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel);
+    font-size: 16px; line-height: 1.55; max-width: 760px; }
+  .refuse b { display: block; font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .error { padding: 12px 16px; color: #8a1c1c; background: #fbeceb; border-radius: var(--r-sm); margin-bottom: 16px; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 18px; max-width: 980px; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  @media (max-width: 1100px) {
+    .app { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); }
+    .lower { grid-template-columns: 1fr; } .change { border-left: 0; border-top: 1px solid var(--line); }
+    .facts { grid-template-columns: repeat(2, auto); gap: 10px 24px; } .trow { grid-template-columns: 1fr; } .tprops { text-align: left; }
+  }
+  @media (max-width: 720px) { .cistrip { padding: 8px 16px 10px; } .routes { grid-template-columns: 1fr; } .route + .route { border-left: 0; }
+    header, .out, aside { padding-left: 16px; padding-right: 16px; } .brand span { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>Machine learning for steels</b><span>Classify, heat-treat, predict · live demo</span></div>
+  <div class="status" id="status"><i></i><span>B.Tech Project, IIT Roorkee</span></div>
+</header>
+<div class="cistrip" id="cistrip">
+      <div class="ttl"><b>Prediction and 90 % interval for each treatment</b> · the true value falls inside the range 9 times out of 10</div>
+      <div id="ci"></div>
+    </div>
+
+
+<div class="app">
+  <aside>
+    <div class="ctl">
+      <label class="lab" for="grade">Steel</label>
+      <select id="grade"></select>
+      <div class="picks" id="picks">
+        <span>Try</span>
+        <button class="chip" data-g="AISI 1020">1020</button>
+        <button class="chip" data-g="AISI 1045">1045</button>
+        <button class="chip" data-g="AISI 1080">1080</button>
+        <button class="chip" data-g="AISI 4140H">4140H</button>
+        <button class="chip" data-g="AISI 4340H">4340H</button>
+        <button class="chip" data-g="304">304 stainless</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lab">Composition (wt %)</span>
+      <div class="comp" id="comp"></div>
+    </div>
+    <div class="ctl">
+      <div class="row"><label class="lab" for="bar">Bar diameter</label><output id="barOut">25 mm</output></div>
+      <input type="range" id="bar" min="10" max="150" step="1" value="25">
+    </div>
+    <div class="group">
+      <h3>Hardening and tempering <span>· shown under Five treatments</span></h3>
+      <div class="ctl">
+        <span class="lab">Quench</span>
+        <div class="tabs" id="medium">
+          <button data-m="auto" class="on">Automatic</button><button data-m="oil">Oil</button><button data-m="water">Water</button>
+        </div>
+      </div>
+      <div class="ctl" style="margin-bottom: 0">
+        <div class="row"><label class="lab" for="temper">Tempering temperature, 1 h</label><output id="tempOut">600 °C</output></div>
+        <input type="range" id="temper" min="150" max="700" step="5" value="600">
+      </div>
+    </div>
+  </aside>
+
+  <main class="out">
+    <div class="error" id="error" hidden></div>
+
+    <section class="steel" id="steel">
+      <div>
+        <h2><b>1</b>Classify</h2>
+        <div class="fam" id="fam">–</div>
+        <div class="sub" id="famSub"></div>
+        <div id="famWarn"></div>
+      </div>
+      <dl class="facts" id="facts"></dl>
+    </section>
+
+    <div class="refuse" id="refuse" hidden></div>
+
+    <div id="results">
+      <div class="bar2">
+        <h2><b>2</b>Heat-treat <b style="margin-left:14px">3</b>Predict</h2>
+        <div class="tabs" id="view">
+          <button data-v="fva" class="on">Furnace vs air</button><button data-v="five">Five treatments</button>
+        </div>
+      </div>
+
+      <div id="fva">
+        <div class="routes">
+          <div class="route" id="rFC" style="--c: var(--fc)"></div>
+          <div class="route" id="rAC" style="--c: var(--ac)"></div>
+        </div>
+        <div class="lower">
+          <div class="cct">
+            <svg id="cct" viewBox="0 0 720 300" role="img" aria-label="CCT diagram with the two cooling paths"></svg>
+            <div class="cap">Model CCT diagram: where ferrite (F), pearlite (P) and bainite (B) start to form, dashed where
+              it ends, Ms the martensite start. A constituent forms where a cooling path crosses its line.</div>
+          </div>
+          <div class="change" id="change"></div>
+        </div>
+      </div>
+
+      <div id="five" hidden>
+        <div class="five" id="fiveCard"></div>
+      </div>
+    </div>
+
+    <footer>Tested on grades the model never saw: tensile strength within 47 MPa after annealing and normalising, and
+      75 MPa after quenching and tempering; the 90 % intervals hold 92.5 % and 89 % of those values. Stress relieving
+      follows EN 1993-1-2 and is not tested against data.</footer>
+  </main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const SHOWN = ["C", "Mn", "Si", "Cr", "Ni", "Mo"];
+const S304 = { C: 0.05, Mn: 1.5, Si: 0.5, Cr: 18.5, Ni: 9.0, Mo: 0.2, V: 0.005, Cu: 0.15, S: 0.015, P: 0.03 };
+const PHASES = [["F", "Ferrite"], ["P", "Pearlite"], ["B", "Bainite"], ["M", "Martensite"], ["C", "Cementite"]];
+const TCOL = { anneal: "--fc", normalise: "--ac", harden: "--hard", quench_temper: "--qt", stress_relieve: "--sr" };
+const state = { comp: {}, grade: "", bar: 25, temper: 600, medium: "auto", view: "fva" };
+let grades = [], reqId = 0, timer = null, flashKey = null;
+
+const n0 = (v) => (v == null ? "–" : Math.round(v).toLocaleString("en-GB"));
+const pct = (v) => `${Math.round(100 * (v || 0))} %`;
+const sgn = (v, d = 0) => (v == null ? "–" : (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d));
+const num = (s) => `<span class="num">${s}</span>`;
+
+async function init() {
+  const g = await (await fetch("/api/grades")).json();
+  grades = g.grades;
+  const sel = $("#grade");
+  sel.innerHTML = '<option value="">Custom composition</option>';
+  const fams = {};
+  grades.forEach((x) => (fams[x.family] ||= []).push(x));
+  Object.entries(fams).forEach(([fam, list]) => {
+    const og = document.createElement("optgroup");
+    og.label = fam;
+    list.forEach((x) => og.append(new Option(x.name, x.name)));
+    sel.append(og);
+  });
+  $("#comp").innerHTML = SHOWN.map((el) =>
+    `<label><span>${el}</span><input type="number" id="el-${el}" min="0" step="0.01"></label>`).join("");
+  sel.addEventListener("change", () => sel.value ? setGrade(sel.value) : null);
+  SHOWN.forEach((el) => $(`#el-${el}`).addEventListener("input", (e) => {
+    const v = parseFloat(e.target.value);
+    state.comp[el] = Number.isFinite(v) ? v : 0;
+    state.grade = ""; sel.value = ""; markPick(); schedule();
+  }));
+  $("#picks").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    if (b.dataset.g === "304") { state.comp = { ...S304 }; state.grade = "304"; sel.value = ""; fillComp(); markPick(); schedule(); }
+    else setGrade(b.dataset.g);
+  });
+  $("#bar").addEventListener("input", (e) => { state.bar = +e.target.value; $("#barOut").textContent = `${state.bar} mm`; schedule(); });
+  $("#temper").addEventListener("input", (e) => {
+    state.temper = +e.target.value; $("#tempOut").textContent = `${state.temper} °C`;
+    openFive("quench_temper"); schedule();
+  });
+  tabs("#medium", "m", (v) => { state.medium = v; openFive("harden"); schedule(); });
+  tabs("#view", "v", (v) => { state.view = v; showView(); });
+  setGrade(g.default);
+}
+
+function tabs(sel, key, cb) {
+  $(sel).addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    $(sel).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+    cb(b.dataset[key]);
+  });
+}
+
+function setGrade(name) {
+  const g = grades.find((x) => x.name === name); if (!g) return;
+  state.grade = name; state.comp = { ...g.comp }; $("#grade").value = name; fillComp(); markPick(); schedule();
+}
+function fillComp() { SHOWN.forEach((el) => { $(`#el-${el}`).value = +(state.comp[el] ?? 0).toFixed(3); }); }
+function markPick() { document.querySelectorAll("#picks .chip").forEach((c) => c.classList.toggle("on", c.dataset.g === state.grade)); }
+function showView() { $("#fva").hidden = state.view !== "fva"; $("#five").hidden = state.view !== "five"; }
+function openFive(key) {
+  flashKey = key;
+  if (state.view === "five") return;
+  state.view = "five";
+  $("#view").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === "five"));
+  showView();
+}
+
+function schedule() { clearTimeout(timer); timer = setTimeout(run, 110); }
+
+async function run() {
+  const id = ++reqId;
+  $("#status").classList.add("busy");
+  try {
+    const r = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comp: state.comp, bar_mm: state.bar, temper_C: state.temper, medium: state.medium }) });
+    const d = await r.json();
+    if (id !== reqId) return;
+    if (d.error) throw new Error(d.error);
+    $("#error").hidden = true;
+    render(d);
+  } catch (err) {
+    if (id !== reqId) return;
+    $("#error").hidden = false; $("#error").textContent = `Could not predict: ${err.message}`;
+  } finally {
+    if (id === reqId) $("#status").classList.remove("busy");
+  }
+}
+
+function render(d) {
+  const s = d.steel;
+  $("#fam").textContent = s.family;
+  $("#famSub").textContent = `${Math.round(100 * s.confidence)} % confident · the AISI/SAE composition rules ` +
+    (s.rules_agree ? "agree" : `say ${s.rules.toLowerCase()} (a borderline composition)`);
+  $("#famWarn").innerHTML = s.unknown ? '<span class="warn">Unlike any known family: treat the prediction with caution</span>' : "";
+  $("#facts").innerHTML = s.in_scope ? [["Ae1", `${n0(s.Ae1)} °C`], ["Ae3", `${n0(s.Ae3)} °C`], ["Ms", `${n0(s.Ms)} °C`],
+    ["Ideal critical diameter", `${n0(s.DI_mm)} mm`]].map(([k, v]) => `<div><dt>${k}</dt><dd class="num">${v}</dd></div>`).join("") : "";
+  $("#refuse").hidden = d.in_scope; $("#results").hidden = !d.in_scope;
+  if (!d.in_scope) {
+    $("#cistrip").hidden = true;
+    $("#refuse").innerHTML = `<b>Outside what the model knows</b>${d.message}`;
+    return;
+  }
+  $("#cistrip").hidden = false;
+  ciPanel(d);
+  route($("#rFC"), d.routes.FC, "Furnace cooled", `annealed · ${d.routes.FC.rate700.toFixed(3)} K/s at 700 °C`);
+  route($("#rAC"), d.routes.AC, `Air cooled, ${n0(d.bar_mm)} mm bar`, `normalised · ${d.routes.AC.rate700.toFixed(2)} K/s at 700 °C`);
+  change(d.change);
+  cct(d.cct, d.bar_mm);
+  five(d.five, d);
+  showView();
+}
+
+function ciPanel(d) {
+  const rows = d.five.rows;
+  const hi = Math.max(...rows.filter((r) => r.UTS).map((r) => r.UTS[2])) * 1.05;
+  const x = (v) => `${(100 * v) / hi}%`;
+  const name = { anneal: "Annealed", normalise: `Normalised, ${Math.round(d.bar_mm)} mm`, harden: "Hardened",
+    quench_temper: `Tempered ${Math.round(d.temper_C)} °C`, stress_relieve: "Stress relieved" };
+  $("#ci").innerHTML = rows.map((r) => {
+    const c = `style="--c: var(${TCOL[r.key]})"`;
+    if (!r.UTS) return `<div class="cirow" ${c}><b>${name[r.key]}</b><div class="pl" style="margin-top:14px"><span>Hardness</span>
+      <span class="num">${n0(r.HV)} HV</span></div><div class="lim">no tensile value: untempered martensite is too brittle to test</div></div>`;
+    const pl = (lab, a, unit) => `<div class="pl"><span>${lab}</span><span><span class="num">${n0(a[0])}${unit}</span>
+      <small class="num">${n0(a[1])}–${n0(a[2])}</small></span></div>`;
+    return `<div class="cirow" ${c}><b>${name[r.key]}</b>
+      <div class="rng"><div class="band" style="left:${x(r.UTS[1])};width:${x(r.UTS[2] - r.UTS[1])}"></div>
+      <div class="mid" style="left:${x(r.UTS[0])}"></div></div>
+      ${pl("UTS", r.UTS, " MPa")}${pl("Yield", r.YS, " MPa")}${pl("Elong.", r.El, " %")}</div>`;
+  }).join("");
+}
+
+function msBar(r) {
+  const parts = PHASES.filter(([k]) => (r[k] || 0) >= 0.005);
+  return `<div class="ms">${parts.map(([k]) => `<i style="width:${100 * r[k]}%;background:var(--${k})"></i>`).join("")}</div>
+    <div class="legend">${parts.map(([k, name]) => `<span><i style="background:var(--${k})"></i>${name} <span class="fig">${pct(r[k])}</span></span>`).join("")}</div>`;
+}
+
+function route(el, r, title, sub) {
+  const p = (key, name, unit) => `<div><dt>${name}</dt><dd>${num(n0(r[key][0]))} <small>${unit}</small><br>
+    <small class="num">${n0(r[key][1])}–${n0(r[key][2])}</small></dd></div>`;
+  const extra = [r.spacing_nm ? `pearlite spacing ${n0(r.spacing_nm)} nm` : null,
+                 r.grain_um ? `ferrite grain ${n0(r.grain_um)} µm` : null,
+                 `austenitised at ${n0(r.T_aust)} °C`].filter(Boolean).join(" · ");
+  el.innerHTML = `<div class="rh"><b>${title}</b><span>${sub}</span></div>${msBar(r)}
+    <div class="uts"><b class="fig">${n0(r.UTS_MPa[0])}</b><span>MPa tensile strength</span></div>
+    <div class="ci">90 % interval <span class="num">${n0(r.UTS_MPa[1])}–${n0(r.UTS_MPa[2])}</span> MPa</div>
+    <dl class="props">${p("YS_MPa", "Yield", "MPa")}${p("El_pct", "Elongation", "%")}${p("HB", "Hardness", "HB")}</dl>
+    <div class="extra">${extra}</div>`;
+}
+
+function change(c) {
+  $("#change").innerHTML = `<h2>What air cooling does</h2>
+    <div class="big fig">${sgn(c.d_uts)}<small>MPa</small></div><div class="sub">change in tensile strength</div>
+    <div class="head">${c.head}</div><p>${c.text}</p>
+    <dl class="deltas"><div><dt>Yield</dt><dd class="num">${sgn(c.d_ys)} MPa</dd></div>
+      <div><dt>Elongation</dt><dd class="num">${sgn(c.d_el, 1)} %</dd></div><div><dt>Hardness</dt><dd class="num">${sgn(c.d_hb)} HB</dd></div></dl>
+    ${c.cautions.length ? `<div class="caut">${c.cautions.map((x) => x[0].toUpperCase() + x.slice(1)).join(". ")}.</div>` : ""}`;
+}
+
+function cct(c, bar) {
+  const W = 720, H = 300, m = { l: 58, r: 20, t: 10, b: 42 }, x1 = Math.log10(4e5), y0 = 100, y1 = 950;
+  const X = (t) => m.l + (Math.log10(Math.max(t, 1)) / x1) * (W - m.l - m.r);
+  const Y = (T) => m.t + ((y1 - T) / (y1 - y0)) * (H - m.t - m.b);
+  const pts = (a) => a.filter(([t, T]) => t >= 1 && t <= 4e5 && T >= y0).map(([t, T]) => `${X(t).toFixed(1)},${Y(T).toFixed(1)}`).join(" ");
+  const sup = ["1", "10", "10²", "10³", "10⁴", "10⁵"];
+  const INK = "#06525c", MUTED = "#2f737d", GRID = "rgba(6,82,92,.10)";
+  let g = "";
+  for (let k = 0; k <= 5; k++) {
+    const x = X(10 ** k);
+    g += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${H - m.b}" stroke="${GRID}"/>
+          <text x="${x}" y="${H - m.b + 18}" text-anchor="middle" font-size="13" fill="${MUTED}">${sup[k]}</text>`;
+  }
+  for (let T = 200; T <= 900; T += 100) {
+    const y = Y(T);
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="${GRID}"/>
+          <text x="${m.l - 8}" y="${y + 4}" text-anchor="end" font-size="13" fill="${MUTED}">${T}</text>`;
+  }
+  g += `<text x="${(m.l + W - m.r) / 2}" y="${H - 4}" text-anchor="middle" font-size="13" fill="${INK}">Time (s)</text>
+        <text transform="translate(15 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="${INK}">Temperature (°C)</text>`;
+  const label = (a, txt, where) => {
+    const v = a.filter(([t, T]) => t >= 1 && t <= 4e5 && T >= y0); if (!v.length) return "";
+    const [t, T] = where === "first" ? v[0] : v[v.length - 1];
+    return `<text x="${X(t) + (where === "first" ? 4 : 8)}" y="${Y(T) + (where === "first" ? 16 : 4)}" font-size="13" font-weight="600" fill="${INK}">${txt}</text>`;
+  };
+  const C = c.curves;
+  if (C.finish && C.finish.length > 1) g += `<polyline points="${pts(C.finish)}" fill="none" stroke="${MUTED}" stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  for (const k of ["F", "P", "B", "Ms"]) {
+    if (C[k] && C[k].length > 1) {
+      g += `<polyline points="${pts(C[k])}" fill="none" stroke="${INK}" stroke-width="1.8"/>`;
+      g += label(C[k], k, k === "Ms" ? "first" : "last");
+    }
+  }
+  const keys = [["FC", "#2a78d6", "Furnace"], ["AC", "#eb6834", `Air, ${Math.round(bar)} mm bar`]];
+  keys.forEach(([k, col]) => {
+    const a = c.paths[k];
+    if (a && a.length > 1) g += `<polyline points="${pts(a)}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>`;
+  });
+  keys.forEach(([, col, txt], i) => {        // legend in the empty top-right corner, so it never covers a curve
+    const x = W - m.r - 222 + i * 86, y = m.t + 14;
+    g += `<line x1="${x}" x2="${x + 18}" y1="${y - 4}" y2="${y - 4}" stroke="${col}" stroke-width="3"/>
+          <text x="${x + 23}" y="${y}" font-size="13" font-weight="600" fill="${col}">${txt}</text>`;
+  });
+  $("#cct").innerHTML = g;
+}
+
+function five(f, d) {
+  const rows = f.rows;
+  const xmax = Math.max(...rows.filter((r) => r.UTS).map((r) => r.UTS[2])) * 1.1;
+  const w = (v) => `${(100 * v) / xmax}%`;
+  const sub = { anneal: "furnace cooled", normalise: `still air, ${Math.round(d.bar_mm)} mm bar`,
+    harden: `${f.quench} quench`, quench_temper: `${f.quench} quench + ${Math.round(d.temper_C)} °C, 1 h`,
+    stress_relieve: "600 °C, 1 h, after normalising" };
+  const body = rows.map((r) => {
+    const track = r.UTS
+      ? `<div class="track"><div class="fill" style="width:${w(r.UTS[0])}"></div>
+           <div class="wh" style="left:${w(r.UTS[1])};width:${w(r.UTS[2] - r.UTS[1])}"></div>
+           <div class="val num" style="left:calc(${w(r.UTS[2])} + 8px)">${n0(r.UTS[0])} MPa</div></div>`
+      : `<div class="track brittle"><span><span class="num">${n0(r.HV)}</span> HV · too brittle for a tensile test</span></div>`;
+    const props = r.UTS
+      ? `<span>Yield</span> ${num(n0(r.YS[0]))} MPa · <span>El</span> ${num(n0(r.El[0]))} %<br><span>Hardness</span> ${num(n0(r.HV))} HV`
+      : `<span>Hardness</span> ${num(n0(r.HV))} HV${r.HRC != null ? ` · ${num(n0(r.HRC))} HRC` : ""}`;
+    return `<div class="trow${r.key === flashKey ? " flash" : ""}" style="--c: var(${TCOL[r.key]})">
+      <div class="tname"><b><i></i>${r.label}</b><span>${sub[r.key]}</span></div>
+      <div><div class="tmicro">${r.micro}</div>${track}</div>
+      <div class="tprops">${props}</div></div>`;
+  }).join("");
+  flashKey = null;
+  const notes = f.notes.map((x) => `<li class="${/embrittlement|hardenability is low/.test(x) ? "w" : ""}">${x}</li>`).join("");
+  $("#fiveCard").innerHTML = `<div class="fhead"><b>One ${Math.round(d.bar_mm)} mm bar, five treatments</b>
+    <span>tensile strength with its 90 % interval</span></div>${body}<ul class="notes">${notes}</ul>`;
+}
+
+init().catch((e) => { $("#error").hidden = false; $("#error").textContent = `Could not start: ${e.message}`; });
+</script>
+</body>
+</html>
